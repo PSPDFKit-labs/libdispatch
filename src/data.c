@@ -83,8 +83,10 @@ _dispatch_data_destroy_buffer(const void* buffer, size_t size,
 		free((void*)buffer);
 	} else if (destructor == DISPATCH_DATA_DESTRUCTOR_NONE) {
 		// do nothing
+#if HAVE_MACH
 	} else if (destructor == DISPATCH_DATA_DESTRUCTOR_VM_DEALLOCATE) {
 		vm_deallocate(mach_task_self(), (vm_address_t)buffer, size);
+#endif
 	} else {
 		if (!queue) {
 			queue = dispatch_get_global_queue(

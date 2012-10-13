@@ -471,11 +471,13 @@ _dispatch_source_kevent_resume(dispatch_source_t ds, uint32_t new_flags)
 	case DISPATCH_EVFILT_TIMER:
 		// called on manager queue only
 		return _dispatch_timer_list_update(ds);
+#if HAVE_MACH
 	case EVFILT_MACHPORT:
 		if (ds->ds_pending_data_mask & DISPATCH_MACH_RECV_MESSAGE) {
 			new_flags |= DISPATCH_MACH_RECV_MESSAGE; // emulate EV_DISPATCH
 		}
 		break;
+#endif /* HAVE_MACH */ 
 	}
 	if (_dispatch_kevent_resume(ds->ds_dkev, new_flags, 0)) {
 		_dispatch_kevent_unregister(ds);
@@ -1814,8 +1816,8 @@ static size_t
 _dispatch_timer_debug_attr(dispatch_source_t ds, char* buf, size_t bufsiz)
 {
 	dispatch_source_refs_t dr = ds->ds_refs;
-	return snprintf(buf, bufsiz, "timer = { target = 0x%llx, "
-			"last_fire = 0x%llx, interval = 0x%llx, flags = 0x%llx }, ",
+	return snprintf(buf, bufsiz, "timer = { target = 0x%"PRIu64", "
+			"last_fire = 0x%"PRIu64", interval = 0x%"PRIu64", flags = 0x%"PRIu64" }, ",
 			ds_timer(dr).target, ds_timer(dr).last_fire, ds_timer(dr).interval,
 			ds_timer(dr).flags);
 }

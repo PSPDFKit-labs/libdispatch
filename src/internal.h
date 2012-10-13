@@ -37,6 +37,15 @@
 #include <TargetConditionals.h>
 #endif
 
+#if HAVE_DECL_TAILQ_FOREACH_SAFE
+#include <sys/queue.h>
+#else
+#include "shims/queue.h"
+#endif
+
+#ifndef HAVE_STRLCPY
+#include "shims/strlcpy.h"
+#endif
 
 #if USE_OBJC && ((!TARGET_IPHONE_SIMULATOR && defined(__i386__)) || \
 		(!TARGET_OS_IPHONE && __MAC_OS_X_VERSION_MIN_REQUIRED < 1080))
@@ -126,7 +135,6 @@
 #endif
 #include <sys/event.h>
 #include <sys/mount.h>
-#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
@@ -141,6 +149,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <search.h>
 #if USE_POSIX_SEM
@@ -205,8 +214,10 @@ DISPATCH_NOINLINE
 void _dispatch_bug(size_t line, long val);
 DISPATCH_NOINLINE
 void _dispatch_bug_client(const char* msg);
+#if HAVE_MACH
 DISPATCH_NOINLINE
 void _dispatch_bug_mach_client(const char *msg, mach_msg_return_t kr);
+#endif
 DISPATCH_NOINLINE DISPATCH_NORETURN
 void _dispatch_abort(size_t line, long val);
 DISPATCH_NOINLINE __attribute__((__format__(__printf__,1,2)))
@@ -431,6 +442,9 @@ extern struct _dispatch_hw_config_s {
 #endif
 #endif // F_SETNOSIGPIPE
 
+#ifndef PAGE_SIZE
+#define PAGE_SIZE sysconf(_SC_PAGESIZE)
+#endif
 
 #define _dispatch_set_crash_log_message(x)
 

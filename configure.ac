@@ -208,14 +208,15 @@ AC_CHECK_FUNCS([pthread_workqueue_setdispatch_np])
 #
 AC_CHECK_DECLS([CLOCK_UPTIME, CLOCK_MONOTONIC], [], [],
   [[#include <time.h>]])
-AC_CHECK_DECLS([NOTE_NONE, NOTE_REAP, NOTE_SIGNAL], [], [],
+AC_CHECK_DECLS([NOTE_NONE, NOTE_REAP, NOTE_SIGNAL, NOTE_REVOKE], [], [],
   [[#include <sys/event.h>]])
+AC_CHECK_DECLS([TAILQ_FOREACH_SAFE], [], [],
+  [[#include <sys/queue.h>]])
 AC_CHECK_DECLS([FD_COPY], [], [], [[#include <sys/select.h>]])
 AC_CHECK_DECLS([SIGEMT], [], [], [[#include <signal.h>]])
 AC_CHECK_DECLS([VQ_UPDATE, VQ_VERYLOWDISK], [], [], [[#include <sys/mount.h>]])
 AC_CHECK_DECLS([program_invocation_short_name], [], [], [[#include <errno.h>]])
-AC_CHECK_FUNCS([pthread_key_init_np pthread_main_np mach_absolute_time malloc_create_zone sysconf getprogname])
-
+AC_CHECK_FUNCS([pthread_key_init_np pthread_main_np mach_absolute_time malloc_create_zone sysconf getprogname strlcpy])
 AC_CHECK_DECLS([POSIX_SPAWN_START_SUSPENDED],
   [have_posix_spawn_start_suspended=true], [have_posix_spawn_start_suspended=false],
   [[#include <sys/spawn.h>]]

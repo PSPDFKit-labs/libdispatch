@@ -1445,7 +1445,12 @@ _dispatch_barrier_sync_f_pop(dispatch_queue_t dq, dispatch_object_t dou,
 		// returns
 		(void)dispatch_atomic_add2o(dbss2->dbss2_dq, dq_running, 2);
 	}
-	return dbss2->dbss2_sema ? dbss2->dbss2_sema : MACH_PORT_DEAD;
+	return dbss2->dbss2_sema ? dbss2->dbss2_sema : 
+#if HAVE_MACH
+        MACH_PORT_DEAD;
+#else
+        (~0);   /* The same value as MACH_PORT_DEAD */
+#endif
 }
 
 static void

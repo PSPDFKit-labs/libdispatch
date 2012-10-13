@@ -46,6 +46,7 @@ __BEGIN_DECLS
 __OSX_AVAILABLE_STARTING(__MAC_10_8, __IPHONE_6_0)
 DISPATCH_EXPORT const dispatch_block_t _dispatch_data_destructor_none;
 
+#if HAVE_MACH
 /*!
  * @const DISPATCH_DATA_DESTRUCTOR_VM_DEALLOCATE
  * @discussion The destructor for dispatch data objects that have been created
@@ -55,6 +56,7 @@ DISPATCH_EXPORT const dispatch_block_t _dispatch_data_destructor_none;
 		(_dispatch_data_destructor_vm_deallocate)
 __OSX_AVAILABLE_STARTING(__MAC_10_8, __IPHONE_6_0)
 DISPATCH_EXPORT const dispatch_block_t _dispatch_data_destructor_vm_deallocate;
+#endif
 
 /*!
  * @typedef dispatch_data_format_type_t

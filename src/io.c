@@ -359,7 +359,11 @@ dispatch_io_create_with_path(dispatch_io_type_t type, const char *path,
 		struct stat st;
 		_dispatch_io_syscall_switch_noerr(err,
 			(path_data->oflag & O_NOFOLLOW) == O_NOFOLLOW ||
+#ifdef O_SYMLINK
 					(path_data->oflag & O_SYMLINK) == O_SYMLINK ?
+#else
+                    0 ?
+#endif
 					lstat(path_data->path, &st) : stat(path_data->path, &st),
 			case 0:
 				err = _dispatch_io_validate_type(channel, st.st_mode);
@@ -1410,7 +1414,7 @@ _dispatch_disk_init(dispatch_fd_entry_t fd_entry, dev_t dev)
 	disk->dev = dev;
 	TAILQ_INIT(&disk->operations);
 	disk->cur_rq = TAILQ_FIRST(&disk->operations);
-	sprintf(label_name, "com.apple.libdispatch-io.deviceq.%d", dev);
+	sprintf(label_name, "com.apple.libdispatch-io.deviceq.%ld", (long)dev);
 	disk->pick_queue = dispatch_queue_create(label_name, NULL);
 	TAILQ_INSERT_TAIL(&_dispatch_io_devs[hash], disk, disk_list);
 out:
@@ -1855,6 +1859,7 @@ _dispatch_disk_perform(void *ctxt)
 static void
 _dispatch_operation_advise(dispatch_operation_t op, size_t chunk_size)
 {
+#ifdef F_RDADVISE
 	int err;
 	struct radvisory advise;
 	// No point in issuing a read advise for the next chunk if we are already
@@ -1878,6 +1883,7 @@ _dispatch_operation_advise(dispatch_operation_t op, size_t chunk_size)
 		// TODO: set disk status on error
 		default: (void)dispatch_assume_zero(err); break;
 	);
+#endif /* F_RDADVISE */
 }
 
 static int

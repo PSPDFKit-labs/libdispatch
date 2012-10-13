@@ -33,6 +33,8 @@ libdispatch_la_SOURCES=		\
 	shims/hw_config.h		\
 	shims/malloc_zone.h		\
 	shims/perfmon.h			\
+	shims/queue.h			\
+	shims/strlcpy.h			\
 	shims/time.h			\
 	shims/tsd.h
 

@@ -300,12 +300,14 @@ _dispatch_bug_client(const char* msg)
 	_dispatch_bug_log("BUG in libdispatch client: %s", msg);
 }
 
+#if HAVE_MACH
 void
 _dispatch_bug_mach_client(const char* msg, mach_msg_return_t kr)
 {
 	_dispatch_bug_log("BUG in libdispatch client: %s %s - 0x%x", msg,
 			mach_error_string(kr), kr);
 }
+#endif
 
 void
 _dispatch_abort(size_t line, long val)
@@ -697,7 +699,10 @@ const struct dispatch_source_type_s _dispatch_source_type_vnode = {
 		.flags = EV_CLEAR,
 	},
 	.mask = NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
-			NOTE_RENAME|NOTE_REVOKE
+			NOTE_RENAME
+#if HAVE_DECL_NOTE_REVOKE
+            |NOTE_REVOKE
+#endif
 #if HAVE_DECL_NOTE_NONE
 			|NOTE_NONE
 #endif

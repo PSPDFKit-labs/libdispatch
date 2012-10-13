@@ -276,7 +276,7 @@ AC_SUBST([OMIT_LEAF_FP_FLAGS])
 
 AC_CACHE_CHECK([for darwin linker], [dispatch_cv_ld_darwin], [
   saveLDFLAGS="$LDFLAGS"
-  LDFLAGS="$LDFLAGS -dynamiclib -compatibility_version 1.2.3 -current_version 4.5.6 -dead_strip"
+  LDFLAGS="$LDFLAGS -dynamiclib -Wl,-compatibility_version,1.2.3 -Wl,-current_version,4.5.6 -Wl,-dead_strip"
   AC_LINK_IFELSE([AC_LANG_PROGRAM([
     extern int foo; int foo;], [foo = 0;])],
     [dispatch_cv_ld_darwin="yes"], [dispatch_cv_ld_darwin="no"])

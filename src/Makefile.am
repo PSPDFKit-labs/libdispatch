@@ -8,8 +8,10 @@ libdispatch_la_SOURCES=		\
 	apply.c					\
 	benchmark.c				\
 	data.c					\
+	data_additions.c 	\
 	init.c					\
 	io.c					\
+	io_additions.c  \
 	object.c				\
 	once.c					\
 	queue.c					\

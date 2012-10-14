@@ -50,8 +50,6 @@ __BEGIN_DECLS
  */
 typedef int dispatch_fd_t;
 
-#ifdef __BLOCKS__
-
 /*!
  * @functiongroup Dispatch I/O Convenience API
  * Convenience wrappers around the dispatch I/O channel API, with simpler
@@ -101,6 +99,7 @@ typedef int dispatch_fd_t;
  *		@param error	An errno condition for the read operation or
  *				zero if the read was successful.
  */
+#ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL3 DISPATCH_NONNULL4 DISPATCH_NOTHROW
 void
@@ -108,6 +107,16 @@ dispatch_read(dispatch_fd_t fd,
 	size_t length,
 	dispatch_queue_t queue,
 	void (^handler)(dispatch_data_t data, int error));
+#endif
+
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_NONNULL3 DISPATCH_NONNULL5 DISPATCH_NOTHROW
+void
+dispatch_read_f(dispatch_fd_t fd,
+  size_t length,
+  dispatch_queue_t queue,
+  void *context,
+  void (*handler)(dispatch_data_t data, int error, void *context));
 
 /*!
  * @function dispatch_write
@@ -139,6 +148,8 @@ dispatch_read(dispatch_fd_t fd,
  *		@param error	An errno condition for the write operation or
  *				zero if the write was successful.
  */
+
+#ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL2 DISPATCH_NONNULL3 DISPATCH_NONNULL4
 DISPATCH_NOTHROW
@@ -147,6 +158,17 @@ dispatch_write(dispatch_fd_t fd,
 	dispatch_data_t data,
 	dispatch_queue_t queue,
 	void (^handler)(dispatch_data_t data, int error));
+#endif
+
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_NONNULL2 DISPATCH_NONNULL3 DISPATCH_NONNULL5
+DISPATCH_NOTHROW
+void
+dispatch_write_f(dispatch_fd_t fd,
+  dispatch_data_t data,
+  dispatch_queue_t queue,
+  void *context,
+  void (*handler)(dispatch_data_t data, int error, void *context));
 
 /*!
  * @functiongroup Dispatch I/O Channel API
@@ -168,8 +190,13 @@ DISPATCH_DECL(dispatch_io);
  * @param data		The data object to be handled.
  * @param error		An errno condition for the operation.
  */
+#ifdef __BLOCKS__
 typedef void (^dispatch_io_handler_t)(bool done, dispatch_data_t data,
 		int error);
+#endif
+
+typedef void (*dispatch_io_function_t)(bool done, dispatch_data_t data,
+  	int error, void *context);
 
 /*!
  * @typedef dispatch_io_type_t
@@ -219,6 +246,7 @@ typedef unsigned long dispatch_io_type_t;
  * @result	The newly created dispatch I/O channel or NULL if an error
  *		occurred.
  */
+#ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_MALLOC DISPATCH_RETURNS_RETAINED DISPATCH_WARN_RESULT
 DISPATCH_NOTHROW
@@ -227,6 +255,17 @@ dispatch_io_create(dispatch_io_type_t type,
 	dispatch_fd_t fd,
 	dispatch_queue_t queue,
 	void (^cleanup_handler)(int error));
+#endif
+
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_MALLOC DISPATCH_RETURNS_RETAINED DISPATCH_WARN_RESULT
+DISPATCH_WARN_RESULT DISPATCH_NOTHROW
+dispatch_io_t
+dispatch_io_create_f(dispatch_io_type_t type,
+  dispatch_fd_t fd,
+  dispatch_queue_t queue,
+  void *context,
+  void(*cleanup_handler)(int error, void *context));
 
 /*!
 * @function dispatch_io_create_with_path
@@ -255,6 +294,7 @@ dispatch_io_create(dispatch_io_type_t type,
 * @result	The newly created dispatch I/O channel or NULL if an error
 *		occurred.
 */
+#ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL2 DISPATCH_MALLOC DISPATCH_RETURNS_RETAINED
 DISPATCH_WARN_RESULT DISPATCH_NOTHROW
@@ -263,6 +303,17 @@ dispatch_io_create_with_path(dispatch_io_type_t type,
 	const char *path, int oflag, mode_t mode,
 	dispatch_queue_t queue,
 	void (^cleanup_handler)(int error));
+#endif
+
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_NONNULL2 DISPATCH_MALLOC DISPATCH_RETURNS_RETAINED
+DISPATCH_WARN_RESULT DISPATCH_NOTHROW
+dispatch_io_t
+dispatch_io_create_with_path_f(dispatch_io_type_t type,
+  const char *path, int oflag, mode_t mode,
+  dispatch_queue_t queue,
+  void *context,
+  void(*cleanup_handler)(int error, void *context));
 
 /*!
  * @function dispatch_io_create_with_io
@@ -295,6 +346,7 @@ dispatch_io_create_with_path(dispatch_io_type_t type,
  * @result	The newly created dispatch I/O channel or NULL if an error
  *		occurred.
  */
+#ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL2 DISPATCH_MALLOC DISPATCH_RETURNS_RETAINED
 DISPATCH_WARN_RESULT DISPATCH_NOTHROW
@@ -303,6 +355,17 @@ dispatch_io_create_with_io(dispatch_io_type_t type,
 	dispatch_io_t io,
 	dispatch_queue_t queue,
 	void (^cleanup_handler)(int error));
+#endif
+
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_NONNULL2 DISPATCH_MALLOC DISPATCH_RETURNS_RETAINED
+DISPATCH_WARN_RESULT DISPATCH_NOTHROW
+dispatch_io_t
+dispatch_io_create_with_io_f(dispatch_io_type_t type,
+  dispatch_io_t io,
+  dispatch_queue_t queue,
+  void *context,
+  void(*cleanup_handler)(int error, void *context));
 
 /*!
  * @function dispatch_io_read
@@ -346,6 +409,7 @@ dispatch_io_create_with_io(dispatch_io_type_t type,
  *	@param error	An errno condition for the read operation or zero if
  *			the read was successful.
  */
+#ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL4 DISPATCH_NONNULL5
 DISPATCH_NOTHROW
@@ -355,6 +419,18 @@ dispatch_io_read(dispatch_io_t channel,
 	size_t length,
 	dispatch_queue_t queue,
 	dispatch_io_handler_t io_handler);
+#endif
+
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL4 DISPATCH_NONNULL6
+DISPATCH_NOTHROW
+void
+dispatch_io_read_f(dispatch_io_t channel,
+  off_t offset,
+  size_t length,
+  dispatch_queue_t queue,
+  void *context,
+  dispatch_io_function_t handler);
 
 /*!
  * @function dispatch_io_write
@@ -399,6 +475,7 @@ dispatch_io_read(dispatch_io_t channel,
  *	@param error	An errno condition for the write operation or zero
  *			if the write was successful.
  */
+#ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL3 DISPATCH_NONNULL4
 DISPATCH_NONNULL5 DISPATCH_NOTHROW
@@ -408,6 +485,18 @@ dispatch_io_write(dispatch_io_t channel,
 	dispatch_data_t data,
 	dispatch_queue_t queue,
 	dispatch_io_handler_t io_handler);
+#endif
+
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL3 DISPATCH_NONNULL4
+DISPATCH_NONNULL6 DISPATCH_NOTHROW
+void
+dispatch_io_write_f(dispatch_io_t channel,
+  off_t offset,
+  dispatch_data_t data,
+  dispatch_queue_t queue,
+  void *context,
+  dispatch_io_function_t handler);
 
 /*!
  * @typedef dispatch_io_close_flags_t
@@ -463,10 +552,19 @@ dispatch_io_close(dispatch_io_t channel, dispatch_io_close_flags_t flags);
  * @param channel	The dispatch I/O channel to close.
  * @param barrier	The flags for the close operation.
  */
+#ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL_ALL DISPATCH_NOTHROW
 void
 dispatch_io_barrier(dispatch_io_t channel, dispatch_block_t barrier);
+#endif
+
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL3 DISPATCH_NOTHROW
+void
+dispatch_io_barrier_f(dispatch_io_t channel,
+  void *context, 
+  dispatch_function_t barrier);
 
 /*!
  * @function dispatch_io_get_descriptor
@@ -579,8 +677,6 @@ void
 dispatch_io_set_interval(dispatch_io_t channel,
 	uint64_t interval,
 	dispatch_io_interval_flags_t flags);
-
-#endif /* __BLOCKS__ */
 
 __END_DECLS
 

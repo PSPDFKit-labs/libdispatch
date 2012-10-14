@@ -51,8 +51,6 @@ DISPATCH_DECL(dispatch_data);
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT struct dispatch_data_s _dispatch_data_empty;
 
-#ifdef __BLOCKS__
-
 /*!
  * @const DISPATCH_DATA_DESTRUCTOR_DEFAULT
  * @discussion The default destructor for dispatch data objects.
@@ -67,9 +65,21 @@ DISPATCH_EXPORT struct dispatch_data_s _dispatch_data_empty;
  * buffer. Used at data object creation to indicate that the supplied buffer
  * was allocated by the malloc() family and should be destroyed with free(3).
  */
+#ifdef __BLOCKS__
 #define DISPATCH_DATA_DESTRUCTOR_FREE (_dispatch_data_destructor_free)
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT const dispatch_block_t _dispatch_data_destructor_free;
+#endif
+
+/*!
+ * @const DISPATCH_DATA_DESTRUCTOR_FREE_F
+ * @discussion The destructor for dispatch data objects created from a malloc'd
+ * buffer. Pass to dispatch_data_create_f() to indicate that the supplied buffer
+ * was allocated by the malloc() family and should be destroyed with free(3).
+ */
+#define DISPATCH_DATA_DESTRUCTOR_FREE_F (&_dispatch_data_destructor_free_f)
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT void _dispatch_data_destructor_free_f(void*);
 
 /*!
  * @function dispatch_data_create
@@ -92,6 +102,7 @@ DISPATCH_EXPORT const dispatch_block_t _dispatch_data_destructor_free;
  *			is no longer needed.
  * @result		A newly created dispatch data object.
  */
+#ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_RETURNS_RETAINED DISPATCH_WARN_RESULT DISPATCH_NOTHROW
 dispatch_data_t
@@ -99,6 +110,38 @@ dispatch_data_create(const void *buffer,
 	size_t size,
 	dispatch_queue_t queue,
 	dispatch_block_t destructor);
+#endif
+
+/*!
+ * @function dispatch_data_create
+ * Creates a dispatch data object from the given contiguous buffer of memory. If
+ * a non-default destructor is provided, ownership of the buffer remains with
+ * the caller (i.e. the bytes will not be copied). The last release of the data
+ * object will result in the invocation of the specified destructor on the
+ * specified queue to free the buffer.
+ *
+ * If the DISPATCH_DATA_DESTRUCTOR_FREE_F destructor is provided the buffer will
+ * be freed via free(3) and the queue argument ignored.
+ *
+ * If the DISPATCH_DATA_DESTRUCTOR_DEFAULT destructor is provided, data object
+ * creation will copy the buffer into internal memory managed by the system.
+ *
+ * @param buffer	A contiguous buffer of data.
+ * @param size		The size of the contiguous buffer of data.
+ * @param queue		The queue to which the destructor should be submitted.
+ * @param context An arbitrary pointer to be passed to the destructor.
+ * @param destructor	The destructor responsible for freeing the data when it
+ *			is no longer needed.
+ * @result		A newly created dispatch data object.
+ */
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_RETURNS_RETAINED DISPATCH_WARN_RESULT DISPATCH_NOTHROW
+dispatch_data_t
+dispatch_data_create_f(const void *buffer,
+  size_t size,
+  dispatch_queue_t queue,
+  void *context,
+  dispatch_function_t destructor);
 
 /*!
  * @function dispatch_data_get_size
@@ -195,10 +238,12 @@ dispatch_data_create_subrange(dispatch_data_t data,
  * @param size		The size of the memory for the current region.
  * @result		A Boolean indicating whether traversal should continue.
  */
+ #ifdef __BLOCKS__
 typedef bool (^dispatch_data_applier_t)(dispatch_data_t region,
 	size_t offset,
 	const void *buffer,
 	size_t size);
+#endif
 
 /*!
  * @function dispatch_data_apply
@@ -220,11 +265,39 @@ typedef bool (^dispatch_data_applier_t)(dispatch_data_t region,
  * @result		A Boolean indicating whether traversal completed
  *			successfully.
  */
+ #ifdef __BLOCKS__
 __OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL_ALL DISPATCH_NOTHROW
 bool
 dispatch_data_apply(dispatch_data_t data, dispatch_data_applier_t applier);
+#endif
 
+/*!
+ * @typedef dispatch_data_applier_function_t
+ * A function to be invoked for every contiguous memory region in a data object.
+ *
+ * @param region  A data object representing the current region.
+ * @param offset  The logical offset of the current region to the start
+ *      of the data object.
+ * @param buffer  The location of the memory for the current region.
+ * @param size    The size of the memory for the current region.
+ * @param context The user-defined context pointer passed to
+ *                dispatch_data_apply_f
+ * @result    A Boolean indicating whether traversal should continue.
+ */
+typedef bool (*dispatch_data_applier_function_t)(dispatch_data_t region,
+  size_t offset,
+  const void *buffer,
+  size_t size,
+  void *context);
+
+__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
+DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL3 DISPATCH_NOTHROW
+bool
+dispatch_data_apply_f(dispatch_data_t data,
+  void *context,
+  dispatch_data_applier_function_t applier);
+ 
 /*!
  * @function dispatch_data_copy_region
  * Finds the contiguous memory region containing the specified location among
@@ -246,8 +319,6 @@ dispatch_data_t
 dispatch_data_copy_region(dispatch_data_t data,
 	size_t location,
 	size_t *offset_ptr);
-
-#endif /* __BLOCKS__ */
 
 __END_DECLS
 

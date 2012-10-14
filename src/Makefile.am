@@ -3,55 +3,76 @@
 #
 
 lib_LTLIBRARIES=libdispatch.la
-noinst_LTLIBRARIES=libshims.la
 
-libdispatch_la_SOURCES=	\
-	apply.c		\
-	benchmark.c	\
-	object.c	\
-	once.c		\
-	queue.c		\
-	queue_kevent.c	\
-	semaphore.c	\
-	source.c	\
-	source_kevent.c	\
-	time.c
+libdispatch_la_SOURCES=		\
+	apply.c					\
+	benchmark.c				\
+	data.c					\
+	init.c					\
+	io.c					\
+	object.c				\
+	once.c					\
+	queue.c					\
+	semaphore.c				\
+	source.c				\
+	time.c					\
+	protocol.defs			\
+	provider.d				\
+	data_internal.h			\
+	internal.h				\
+	io_internal.h			\
+	object_internal.h		\
+	queue_internal.h		\
+	semaphore_internal.h	\
+	shims.h					\
+	source_internal.h		\
+	trace.h					\
+	shims/atomic.h			\
+	shims/getprogname.h		\
+	shims/hw_config.h		\
+	shims/malloc_zone.h		\
+	shims/perfmon.h			\
+	shims/queue.h			\
+	shims/strlcpy.h			\
+	shims/time.h			\
+	shims/tsd.h
 
-libshims_la_SOURCES=	\
-	shims/mach.c	\
-	shims/time.c	\
-	shims/tsd.c
+AM_CPPFLAGS=-I$(top_builddir) -I$(top_srcdir) \
+	-I$(top_srcdir)/private -I$(top_srcdir)/os
 
-libdispatch_la_CFLAGS=-Wall
-INCLUDES=-I$(top_builddir) -I$(top_srcdir) \
-	@APPLE_LIBC_SOURCE_PATH@ @APPLE_XNU_SOURCE_PATH@
+AM_CFLAGS=-Wall $(VISIBILITY_FLAGS) $(OMIT_LEAF_FP_FLAGS) \
+	$(MARCH_FLAGS) $(CBLOCKS_FLAGS) $(KQUEUE_CFLAGS)
 
-libdispatch_la_CFLAGS+=$(MARCH_FLAGS) $(CBLOCKS_FLAGS) $(KQUEUE_CFLAGS)
+libdispatch_la_LDFLAGS=-avoid-version
 
-if USE_LEGACY_API
-libdispatch_la_SOURCES+=	\
-	legacy.c
+if HAVE_DARWIN_LD
+libdispatch_la_LDFLAGS+=-Wl,-compatibility_version,1 \
+	-Wl,-current_version,$(VERSION) -Wl,-dead_strip
 endif
 
-libdispatch_la_LIBADD=libshims.la $(KQUEUE_LIBS)
-libdispatch_la_DEPENDENCIES=libshims.la
-
-if USE_LIBPTHREAD_WORKQUEUE
-libdispatch_la_LIBADD+=-lpthread_workqueue
+if USE_OBJC
+libdispatch_la_SOURCES+=object.m
+libdispatch_la_OBJCFLAGS=$(AM_CFLAGS) -fobjc-gc
+libdispatch_la_LDFLAGS+=-Wl,-upward-lobjc -Wl,-upward-lauto \
+	-Wl,-order_file,$(top_srcdir)/xcodeconfig/libdispatch.order \
+	-Wl,-alias_list,$(top_srcdir)/xcodeconfig/libdispatch.aliases \
+	-Wl,-unexported_symbols_list,$(top_srcdir)/xcodeconfig/libdispatch.unexport
 endif
+
+CLEANFILES=
+DISTCLEANFILES=System objc
 
 if USE_MIG
-libdispatch_la_SOURCES+=	\
-	protocolUser.c		\
-	protocolServer.c
-BUILT_SOURCES=			\
-	protocol.h		\
-	protocolUser.c		\
-	protocolServer.c	\
+BUILT_SOURCES=				\
+	protocolUser.c			\
+	protocol.h				\
+	protocolServer.c		\
 	protocolServer.h
-CLEANFILES=$BUILT_SOURCES
 
-protocol.h protocolUser.c protocolServer.h protocolServer.c: protocol.defs
-	$(MIG) -user protocolUser.c -header protocol.h \
-	    -server protocolServer.c -sheader protocolServer.h protocol.defs
+nodist_libdispatch_la_SOURCES=$(BUILT_SOURCES)
+CLEANFILES+=$(BUILT_SOURCES)
+
+%User.c %.h %Server.c %Server.h: $(abs_srcdir)/%.defs
+	$(MIG) -user $*User.c -header $*.h \
+	    -server $*Server.c -sheader $*Server.h $<
 endif

@@ -374,6 +374,9 @@ void _dispatch_run_timers(void);
 struct timespec *_dispatch_get_next_timer_fire(struct timespec *howsoon);
 
 uint64_t _dispatch_timeout(dispatch_time_t when);
+#if USE_POSIX_SEM
+struct timespec _dispatch_timeout_ts(dispatch_time_t when);
+#endif
 
 extern bool _dispatch_safe_fork;
 

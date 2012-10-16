@@ -262,13 +262,11 @@ again:
 	switch (timeout) {
 	default:
 		do {
-			uint64_t nsec = _dispatch_timeout(timeout);
-			_timeout.tv_sec = (typeof(_timeout.tv_sec))(nsec / NSEC_PER_SEC);
-			_timeout.tv_nsec = (typeof(_timeout.tv_nsec))(nsec % NSEC_PER_SEC);
+			_timeout = _dispatch_timeout_ts(timeout);
 			ret = slowpath(sem_timedwait(&dsema->dsema_sem, &_timeout));
 		} while (ret == -1 && errno == EINTR);
 
-		if (ret == -1 && errno != ETIMEDOUT) {
+		if (!(ret == -1 && errno == ETIMEDOUT)) {
 			DISPATCH_SEMAPHORE_VERIFY_RET(ret);
 			break;
 		}
@@ -460,9 +458,7 @@ again:
 	switch (timeout) {
 	default:
 		do {
-			uint64_t nsec = _dispatch_timeout(timeout);
-			_timeout.tv_sec = (typeof(_timeout.tv_sec))(nsec / NSEC_PER_SEC);
-			_timeout.tv_nsec = (typeof(_timeout.tv_nsec))(nsec % NSEC_PER_SEC);
+			_timeout = _dispatch_timeout_ts(timeout);
 			ret = slowpath(sem_timedwait(&dsema->dsema_sem, &_timeout));
 		} while (ret == -1 && errno == EINTR);
 

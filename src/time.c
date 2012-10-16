@@ -121,3 +121,48 @@ _dispatch_timeout(dispatch_time_t when)
 	now = _dispatch_absolute_time();
 	return now >= when ? 0 : _dispatch_time_mach2nano(when - now);
 }
+
+#if USE_POSIX_SEM
+/*
+ * Unlike Mach semaphores, POSIX semaphores take an absolute, real time as an
+ * argument to sem_timedwait().  This routine converts from dispatch_time_t
+ * but assumes the caller has already handled the possibility of
+ * DISPATCH_TIME_FOREVER.
+ */
+struct timespec
+_dispatch_timeout_ts(dispatch_time_t when)
+{
+	struct timespec ts_realtime;
+	uint64_t abstime, realtime;
+	int ret;
+
+	if (when == 0) {
+		ret = clock_gettime(CLOCK_REALTIME, &ts_realtime);
+		(void)dispatch_assume_zero(ret);
+		return (ts_realtime);
+	}
+	if ((int64_t)when < 0) {
+		ret = clock_gettime(CLOCK_REALTIME, &ts_realtime);
+		(void)dispatch_assume_zero(ret);
+		when = -(int64_t)when + ts_realtime.tv_sec * NSEC_PER_SEC +
+		    ts_realtime.tv_nsec;
+		ts_realtime.tv_sec = when / NSEC_PER_SEC;
+		ts_realtime.tv_nsec = when % NSEC_PER_SEC;
+		return (ts_realtime);
+	}
+
+	/*
+	 * Rebase 'when': (when - abstime) + realtime.
+	 *
+	 * XXXRW: Should we cache this delta to avoid system calls?
+	 */
+	abstime = _dispatch_absolute_time();
+	ret = clock_gettime(CLOCK_REALTIME, &ts_realtime);
+	(void)dispatch_assume_zero(ret);
+	realtime = ts_realtime.tv_sec * NSEC_PER_SEC + ts_realtime.tv_nsec +
+	    (when - abstime);
+	ts_realtime.tv_sec = realtime / NSEC_PER_SEC;
+	ts_realtime.tv_nsec = realtime % NSEC_PER_SEC;
+	return (ts_realtime);
+}
+#endif

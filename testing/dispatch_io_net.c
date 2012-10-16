@@ -18,21 +18,29 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <fcntl.h>
-#include <sys/stat.h>
+#include <limits.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <spawn.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#if HAVE_CRT_EXTERNS_H
 #include <crt_externs.h>
+#endif
+#if __APPLE__
 #include <mach-o/dyld.h>
+#endif
 #include <Block.h>
+
 #include <bsdtests.h>
 #include "dispatch_test.h"
 #include <dispatch/dispatch.h>
@@ -46,6 +54,37 @@ extern char **environ;
 #endif
 
 #if DISPATCHTEST_IO
+
+// Same semantics as _NSGetExecutablePath
+static int
+get_executable_path(char *buf, uint32_t *bufsize)
+{
+#if __APPLE__
+	return _NSGetExecutablePath(buf, bufsize);
+	
+#elif __linux
+	char path_buf[PATH_MAX];
+	if (!realpath("/proc/self/exe", path_buf)) {
+		return -1;
+	}
+
+	size_t actual_length = strlen(path_buf);
+	
+	if (actual_length >= *bufsize) {
+		*bufsize = actual_length + 1;
+		return -1;
+
+	} else {
+		strncpy(buf, path_buf, *bufsize);
+		return 0;
+	}
+
+#else
+#error "Don't know how to get current executable path."
+#endif
+}
+
+
 int
 main(int argc, char** argv)
 {
@@ -91,10 +130,12 @@ main(int argc, char** argv)
 			test_errno("client-open", errno, 0);
 			test_stop();
 		}
+#ifdef F_NOCACHE
 		if (fcntl(fd, F_NOCACHE, 1)) {
 			test_errno("client-fcntl F_NOCACHE", errno, 0);
 			test_stop();
 		}
+#endif
 		struct stat sb;
 		if (fstat(fd, &sb)) {
 			test_errno("client-fstat", errno, 0);
@@ -192,7 +233,7 @@ main(int argc, char** argv)
 		char exec_filename [256] = {};
 		uint32_t bufsize = 256;
 
-		if (_NSGetExecutablePath(exec_filename, &bufsize) == -1) {
+		if (get_executable_path(exec_filename, &bufsize) == -1) {
 			fprintf(stderr, "Failed to get path name for running executable\n");
 			test_stop();
 		}
@@ -225,10 +266,12 @@ main(int argc, char** argv)
 			test_errno("open", errno, 0);
 			goto stop_test;
 		}
+#ifdef F_NOCACHE
 		if (fcntl(read_fd, F_NOCACHE, 1)) {
 			test_errno("fcntl F_NOCACHE", errno, 0);
 			goto stop_test;
 		}
+#endif
 		struct stat sb;
 		if (fstat(read_fd, &sb)) {
 			test_errno("fstat", errno, 0);
@@ -261,7 +304,7 @@ main(int argc, char** argv)
 				// convenience method handlers should only be called once
 				if (remaining) {
 					fprintf(stderr, "Server-dispatch_write() incomplete .. "
-							"%lu bytes\n", dispatch_data_get_size(remaining));
+							"%zu bytes\n", dispatch_data_get_size(remaining));
 					close(read_fd);
 					close(clientfd);
 					close(sockfd);

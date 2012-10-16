@@ -152,7 +152,7 @@ AS_IF([test -n "$apple_xnu_source_bsd_path"], [
 #
 # Check for CoreFoundation, Foundation and objc
 #
-AC_CHECK_HEADER([CoreFoundation/CoreFoundation.h],
+AC_CHECK_HEADERS([CoreFoundation/CoreFoundation.h],
   [have_corefoundation=true], [have_corefoundation=false]
 )
 AM_CONDITIONAL(HAVE_COREFOUNDATION, $have_corefoundation)
@@ -193,6 +193,7 @@ AC_CHECK_HEADER([mach/mach.h], [
   have_mach=true], [have_mach=false]
 )
 AM_CONDITIONAL(USE_MIG, $have_mach)
+AM_CONDITIONAL(HAVE_MACH, $have_mach)
 
 #
 # We use the availability of pthread_workqueue.h to decide whether to compile
@@ -216,7 +217,10 @@ AC_CHECK_DECLS([FD_COPY], [], [], [[#include <sys/select.h>]])
 AC_CHECK_DECLS([SIGEMT], [], [], [[#include <signal.h>]])
 AC_CHECK_DECLS([VQ_UPDATE, VQ_VERYLOWDISK], [], [], [[#include <sys/mount.h>]])
 AC_CHECK_DECLS([program_invocation_short_name], [], [], [[#include <errno.h>]])
-AC_CHECK_FUNCS([pthread_key_init_np pthread_main_np mach_absolute_time malloc_create_zone sysconf getprogname strlcpy])
+AC_CHECK_FUNCS([pthread_key_init_np pthread_main_np mach_absolute_time malloc_create_zone])
+AC_CHECK_FUNCS([sysctlbyname sysconf getprogname])
+AC_CHECK_FUNCS([strlcpy asprintf])
+AC_CHECK_DECLS([POSIX_SPAWN_SETEXEC], [], [], [[#include <sys/spawn.h>]])
 AC_CHECK_DECLS([POSIX_SPAWN_START_SUSPENDED],
   [have_posix_spawn_start_suspended=true], [have_posix_spawn_start_suspended=false],
   [[#include <sys/spawn.h>]]

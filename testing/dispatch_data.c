@@ -18,11 +18,15 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <stdio.h>
-
+#include <stdlib.h>
+ 
 #include <dispatch/dispatch.h>
+#if HAVE_TARGETCONDITIONALS_H
 #include <TargetConditionals.h>
-
+#endif
 #include <bsdtests.h>
 #include "dispatch_test.h"
 

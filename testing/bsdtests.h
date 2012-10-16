@@ -22,8 +22,18 @@
 #define __BSD_TEST_H__
 
 #include <errno.h>
+#include <string.h>
+#include <stdint.h>
+#if HAVE_MACH
 #include <mach/error.h>
+#endif
+#if HAVE_COREFOUNDATION_COREFOUNDATION_H
 #include <CoreFoundation/CoreFoundation.h>
+#endif
+
+#ifndef __printflike
+#define __printflike(a, b) __attribute__((format(printf, (a), (b))))
+#endif
 
 static inline const char*
 __BASENAME__(const char *_str_)
@@ -121,12 +131,16 @@ void _test_errno(const char* file, long line, const char* desc, long actual, lon
 #define test_errno(a,b,c) _test_errno(__SOURCE_FILE__, __LINE__, a, b, c)
 void test_errno_format(long actual, long expected, const char *format, ...) __printflike(3,4);
 
+#if HAVE_MACH
 void _test_mach_error(const char* file, long line, const char* desc, mach_error_t actual, mach_error_t expected);
 #define test_mach_error(a,b,c) _test_mach_error(__SOURCE_FILE__, __LINE__, a, b, c)
 void test_mach_error_format(mach_error_t actual, mach_error_t expected, const char *format, ...) __printflike(3,4);
+#endif
 
+#if HAVE_COREFOUNDATION_COREFOUNDATION_H
 void test_cferror(const char* desc, CFErrorRef actual, CFIndex expectedCode);
 void test_cferror_format(CFErrorRef actual, CFIndex expectedCode, const char *format, ...) __printflike(3,4);
+#endif
 
 void _test_skip(const char* file, long line, const char* desc);
 #define test_skip(m) _test_skip(__SOURCE_FILE__, __LINE__, m)

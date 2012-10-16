@@ -18,6 +18,8 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -54,7 +56,11 @@ main(void)
 	dispatch_group_t g = dispatch_group_create();
 
 	while (iterations++ < ITERATIONS) {
-		int fd = open(currentName, O_EVTONLY);
+		int openFlags = O_RDONLY;
+#ifdef O_EVTONLY
+		openFlags = O_EVTONLY;
+#endif
+		int fd = open(currentName, openFlags);
 		if (fd == -1) {
 			test_errno("open", errno, 0);
 			test_stop();

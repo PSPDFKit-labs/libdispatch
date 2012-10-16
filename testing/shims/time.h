@@ -18,29 +18,40 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#ifndef __DISPATCH_TESTS_SHIMS_TIME
+#define __DISPATCH_TESTS_SHIMS_TIME
+
 #include <config/config.h>
 
-#include <dispatch/dispatch.h>
-#include <stdlib.h>
+#include <assert.h>
+#if HAVE_MACH
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#else
+#include <time.h>
+#endif
 
-#include <bsdtests.h>
-#include "dispatch_test.h"
+#ifndef NSEC_PER_SEC
+#define NSEC_PER_SEC 1000000000ull
+#endif
 
-void
-work(void *context __attribute__((unused)))
+static inline uint64_t
+_dispatch_monotonic_time()
 {
-	test_stop();
-	exit(0);
+#if HAVE_MACH
+	return mach_absolute_time();
+#else
+	clockid_t clockID;
+	#ifdef CLOCK_MONOTONIC_RAW
+		clockID = CLOCK_MONOTONIC_RAW;
+	#else
+		clockID = CLOCK_MONOTONIC;
+	#endif
+	struct timespec ts;
+	int status = clock_gettime(clockID, &ts);
+	assert(0 == status);
+	return (uint64_t)ts.tv_nsec + NSEC_PER_SEC * ts.tv_sec;
+#endif
 }
 
-int
-main(void)
-{
-	dispatch_test_start("Dispatch C99");
-	dispatch_queue_t q = dispatch_get_main_queue();
-	test_ptr_notnull("dispatch_get_main_queue", q);
-
-	dispatch_async_f(dispatch_get_main_queue(), NULL, work);
-	dispatch_main();
-	return 0;
-}
+#endif  // __DISPATCH_TESTS_SHIMS_TIME

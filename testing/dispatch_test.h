@@ -18,6 +18,7 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include "shims.h"
 #include <sys/cdefs.h>
 #include <stdbool.h>
 #include <dispatch/dispatch.h>

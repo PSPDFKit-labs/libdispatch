@@ -18,9 +18,12 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/resource.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -28,10 +31,15 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fts.h>
+
+#if HAVE_MACH
 #include <mach/mach.h>
 #include <mach/mach_time.h>
-#include <libkern/OSAtomic.h>
+#endif
+
+#if HAVE_TARGETCONDITIONALS_H
 #include <TargetConditionals.h>
+#endif
 
 #include <dispatch/dispatch.h>
 
@@ -45,6 +53,13 @@
 #define DISPATCHTEST_IO_PATH 1 // rdar://problem/7738093
 #endif
 #endif
+#endif
+
+
+#if __APPLE__
+#define DO_IMMUTABLE_DIRECTORY_TEST 1
+#else
+// On Linux, you need to be root to set a file's immutable flag.
 #endif
 
 void
@@ -61,7 +76,22 @@ test_fin(void *cxt)
 #define maxopenfiles 768
 #else
 #define LARGE_FILE "/System/Library/Speech/Voices/Alex.SpeechVoice/Contents/Resources/PCMWave" // 417MB file
-#define maxopenfiles 4096
+
+static int
+_maxopenfiles()
+{
+	static dispatch_once_t oncePred;
+	static int count;
+	dispatch_once(&oncePred, ^{
+		struct rlimit lim;
+		getrlimit(RLIMIT_NOFILE, &lim);
+		count = MIN(4096, (lim.rlim_max - 256) / 2);
+	});
+
+	return count;
+}
+
+#define maxopenfiles (_maxopenfiles())
 #endif
 
 static void
@@ -80,10 +110,12 @@ test_io_close(int with_timer, bool from_path)
 		test_errno("open", errno, 0);
 		test_stop();
 	}
+#ifdef F_GLOBAL_NOCACHE
 	if (fcntl(fd, F_GLOBAL_NOCACHE, 1) == -1) {
 		test_errno("fcntl F_GLOBAL_NOCACHE", errno, 0);
 		test_stop();
 	}
+#endif
 	struct stat sb;
 	if (fstat(fd, &sb)) {
 		test_errno("fstat", errno, 0);
@@ -341,11 +373,13 @@ test_async_read(char *path, size_t size, int option, dispatch_queue_t queue,
 		test_errno("Failed to open file", errno, 0);
 		test_stop();
 	}
+#ifdef F_GLOBAL_NOCACHE
 	// disable caching also for extra fd opened by dispatch_io_create_with_path
 	if (fcntl(fd, F_GLOBAL_NOCACHE, 1) == -1) {
 		test_errno("fcntl F_GLOBAL_NOCACHE", errno, 0);
 		test_stop();
 	}
+#endif
 	switch (option) {
 		case DISPATCH_ASYNC_READ_ON_CONCURRENT_QUEUE:
 		case DISPATCH_ASYNC_READ_ON_SERIAL_QUEUE:
@@ -454,7 +488,7 @@ test_read_dirs(char **paths, dispatch_queue_t queue, dispatch_group_t g,
 			total_size += size;
 			files_opened++;
 			test_async_read(node->fts_path, size, option, queue, ^(size_t len){
-				OSAtomicAdd32(len, bytes);
+				__sync_add_and_fetch(bytes, len);
 				dispatch_semaphore_signal(s);
 				dispatch_group_leave(g);
 			});
@@ -529,14 +563,17 @@ test_read_many_files(void)
 	struct rlimit l;
 	if (!getrlimit(RLIMIT_NOFILE, &l) && l.rlim_cur < 2 * maxopenfiles + 256) {
 		l.rlim_cur = 2 * maxopenfiles + 256;
-		setrlimit(RLIMIT_NOFILE, &l);
+		if (setrlimit(RLIMIT_NOFILE, &l)) {
+			test_errno("setrlimit", errno, 0);
+			test_stop();
+		}
 	}
 	for (i = 0; i < sizeof(queues)/sizeof(dispatch_queue_t); ++i) {
 		fprintf(stdout, "%s:\n", names[i]);
 		bytes = 0;
-		start = mach_absolute_time();
+		start = _dispatch_monotonic_time();
 		files_read = test_read_dirs(paths, queues[i], g, s, &bytes, i);
-		double elapsed = (double)(mach_absolute_time() - start) / NSEC_PER_SEC;
+		double elapsed = (double)(_dispatch_monotonic_time() - start) / NSEC_PER_SEC;
 		double throughput = ((double)bytes / elapsed)/(1024 * 1024);
 		fprintf(stdout, "Total Files read: %u, Total MBytes %g, "
 				"Total time: %g s, Throughput: %g MB/s\n", files_read,
@@ -551,6 +588,8 @@ static void
 test_io_from_io(void) // rdar://problem/8388909
 {
 #if DISPATCH_API_VERSION >= 20101012
+	dispatch_io_t io = NULL;
+	dispatch_group_t g = dispatch_group_create();
 	const size_t siz_in = 10240;
 	dispatch_queue_t q = dispatch_get_global_queue(0, 0);
 	char path[] = "/tmp/dispatchtest_io.XXXXXX/file.name";
@@ -560,13 +599,16 @@ test_io_from_io(void) // rdar://problem/8388909
 		test_ptr_notnull("mkdtemp failed", path);
 		test_stop();
 	}
+
+#if DO_IMMUTABLE_DIRECTORY_TEST
 	// Make the directory immutable
 	if (chflags(path, UF_IMMUTABLE) == -1) {
 		test_errno("chflags", errno, 0);
 		test_stop();
 	}
+
 	*tmp = '/';
-	dispatch_io_t io = dispatch_io_create_with_path(DISPATCH_IO_RANDOM, path,
+	io = dispatch_io_create_with_path(DISPATCH_IO_RANDOM, path,
 			O_CREAT|O_RDWR, 0600, q, ^(int error) {
 				if (error) {
 					test_errno("channel cleanup called with error", error, 0);
@@ -574,8 +616,6 @@ test_io_from_io(void) // rdar://problem/8388909
 				}
 				test_errno("channel cleanup called", error, 0);
 			});
-
-	dispatch_group_t g = dispatch_group_create();
 	char *foo = malloc(256);
 	dispatch_data_t tdata;
 	tdata = dispatch_data_create(foo, 256, NULL, DISPATCH_DATA_DESTRUCTOR_FREE);
@@ -600,7 +640,9 @@ test_io_from_io(void) // rdar://problem/8388909
 		test_errno("chflags", errno, 0);
 		test_stop();
 	}
-	const char *path_in = "/dev/random";
+#endif	// DO_IMMUTABLE_DIRECTORY_TEST
+
+	const char *path_in = "/dev/urandom";
 	int in = open(path_in, O_RDONLY);
 	if (in == -1) {
 		test_errno("open", errno, 0);

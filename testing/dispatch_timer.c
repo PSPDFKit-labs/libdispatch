@@ -18,9 +18,12 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
-#include <stdlib.h>
+#include <config/config.h>
+
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <dispatch/dispatch.h>
@@ -63,7 +66,7 @@ test_timer(void)
 		dispatch_source_set_event_handler(s, ^{
 			if (!finalized) {
 				test_long_less_than("timer number", j, stop_at);
-				fprintf(stderr, "timer[%lld]\n", j);
+				fprintf(stderr, "timer[%"PRIu64"]\n", j);
 			}
 			dispatch_release(s);
 		});

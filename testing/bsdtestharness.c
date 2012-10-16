@@ -18,6 +18,8 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include "config.h"
+
 #include <dispatch/dispatch.h>
 #include <assert.h>
 #include <spawn.h>
@@ -25,10 +27,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+
+#if HAVE_MACH
 #include <mach/clock_types.h>
 #include <mach-o/arch.h>
+#endif
+
 #include <sys/resource.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #include <bsdtests.h>
 
@@ -46,7 +53,10 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	short spawnflags = POSIX_SPAWN_START_SUSPENDED;
+	short spawnflags = 0;
+#if HAVE_DECL_POSIX_SPAWN_START_SUSPENDED
+	spawnFlags |= POSIX_SPAWN_START_SUSPENDED;
+#endif
 #if TARGET_OS_EMBEDDED
 	spawnflags |= POSIX_SPAWN_SETEXEC;
 #endif
@@ -64,6 +74,7 @@ main(int argc, char *argv[])
 		to *= NSEC_PER_SEC;
 	}
 
+#if __APPLE__
 	char *arch = getenv("BSDTEST_ARCH");
 	if (arch) {
 		const NXArchInfo *ai = NXGetArchInfoFromName(arch);
@@ -72,6 +83,7 @@ main(int argc, char *argv[])
 			assert(res == 0);
 		}
 	}
+#endif
 
 	int i;
 	char** newargv = calloc(argc, sizeof(void*));
@@ -83,9 +95,11 @@ main(int argc, char *argv[])
 	struct timeval tv_start;
 	gettimeofday(&tv_start, NULL);
 
+#if HAVE_DECL_POSIX_SPAWN_SETEXEC
 	if (spawnflags & POSIX_SPAWN_SETEXEC) {
 		pid = fork();
 	}
+#endif
 	if (!pid) {
 		res = posix_spawnp(&pid, newargv[0], NULL, &attr, newargv, environ);
 		if (res) {
@@ -100,9 +114,9 @@ main(int argc, char *argv[])
 
 	dispatch_queue_t main_q = dispatch_get_main_queue();
 
-	tmp_ds = dispatch_source_create(DISPATCH_SOURCE_TYPE_PROC, pid, DISPATCH_PROC_EXIT, main_q);
+	tmp_ds = dispatch_source_create(DISPATCH_SOURCE_TYPE_SIGNAL, SIGCHLD, 0, main_q);
 	assert(tmp_ds);
-	dispatch_source_set_event_handler(tmp_ds, ^{
+	dispatch_block_t try_reap_child = ^{
 		int status;
 		struct rusage usage;
 		struct timeval tv_stop, tv_wall;
@@ -112,8 +126,12 @@ main(int argc, char *argv[])
 		tv_wall.tv_sec -= (tv_stop.tv_usec < tv_start.tv_usec);
 		tv_wall.tv_usec = abs(tv_stop.tv_usec - tv_start.tv_usec);
 
-		int res2 = wait4(pid, &status, 0, &usage);
+		int res2 = wait4(pid, &status, WNOHANG, &usage);
 		assert(res2 != -1);
+
+		if (res2 == 0 || !(WIFEXITED(status) || WIFSIGNALED(status)))
+			return;		// false alarm; child hasn't exited yet.
+		
 		test_long("Process exited", (WIFEXITED(status) && WEXITSTATUS(status) && WEXITSTATUS(status) != 0xff) || WIFSIGNALED(status), 0);
 		printf("[PERF]\twall time: %ld.%06ld\n", tv_wall.tv_sec, (long)tv_wall.tv_usec);
 		printf("[PERF]\tuser time: %ld.%06ld\n", usage.ru_utime.tv_sec, (long)usage.ru_utime.tv_usec);
@@ -124,8 +142,12 @@ main(int argc, char *argv[])
 		printf("[PERF]\tvoluntary context switches: %ld\n", usage.ru_nvcsw);
 		printf("[PERF]\tinvoluntary context switches: %ld\n", usage.ru_nivcsw);
 		exit((WIFEXITED(status) && WEXITSTATUS(status)) || WIFSIGNALED(status));
-	});
+	};
+	dispatch_source_set_event_handler(tmp_ds, try_reap_child);
 	dispatch_resume(tmp_ds);
+
+	// In case the child process has already exited.
+	dispatch_async(main_q, try_reap_child);
 
 	if (!to) {
 #if TARGET_OS_EMBEDDED
@@ -149,10 +171,17 @@ main(int argc, char *argv[])
 	});
 	dispatch_resume(tmp_ds);
 
+#if HAVE_DECL_POSIX_SPAWN_SETEXEC
 	if (spawnflags & POSIX_SPAWN_SETEXEC) {
 		usleep(USEC_PER_SEC/10);
 	}
-	kill(pid, SIGCONT);
+#endif
+
+#if HAVE_DECL_POSIX_SPAWN_START_SUSPENDED
+	if (spawnflags & POSIX_SPAWN_START_SUSPENDED) {
+		kill(pid, SIGCONT);
+	}
+#endif
 
 	dispatch_main();
 

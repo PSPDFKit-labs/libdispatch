@@ -18,11 +18,15 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
+
+#include "shims.h"
 
 int
 has_prefix(const char* str, const char* prefix)

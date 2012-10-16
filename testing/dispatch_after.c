@@ -18,12 +18,13 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <dispatch/dispatch.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <libkern/OSAtomic.h>
 
 #include <bsdtests.h>
 #include <Block.h>
@@ -31,7 +32,7 @@
 #include "dispatch_test.h"
 
 void
-done(void *arg __unused)
+done(void *arg __attribute__((unused)))
 {
 	sleep(1);
 	test_stop();

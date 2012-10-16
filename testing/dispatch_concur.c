@@ -18,6 +18,8 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <dispatch/dispatch.h>
 #include <dispatch/private.h>
 #include <unistd.h>
@@ -25,6 +27,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/param.h>	// for MIN()
 
 #include <bsdtests.h>
 #include "dispatch_test.h"
@@ -201,9 +204,7 @@ main(int argc __attribute__((unused)), char* argv[] __attribute__((unused)))
 {
 	dispatch_test_start("Dispatch Private Concurrent/Wide Queue"); // <rdar://problem/8049506&8169448&8186485>
 
-	uint32_t activecpu;
-	size_t s = sizeof(activecpu);
-	sysctlbyname("hw.activecpu", &activecpu, &s, NULL, 0);
+	uint32_t activecpu = _dispatch_get_activecpu();
 	size_t n = activecpu / 2 > 1 ? activecpu / 2 : 1, w = activecpu * 2;
 	dispatch_queue_t tq, ttq;
 	long qw, tqw, ttqw;

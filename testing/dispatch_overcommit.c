@@ -18,13 +18,13 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
 #include <dispatch/dispatch.h>
 #include <dispatch/private.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <libkern/OSAtomic.h>
 
 #include <bsdtests.h>
 #include "dispatch_test.h"
@@ -48,7 +48,7 @@ main(void)
 		dispatch_set_target_queue(queue, dispatch_get_global_queue(0, DISPATCH_QUEUE_OVERCOMMIT));
 
 		dispatch_async(queue, ^{
-			OSAtomicIncrement32(&count);
+			__sync_add_and_fetch(&count, 1);
 			if (count == final) {
 				test_long("count", count, final);
 				test_stop();

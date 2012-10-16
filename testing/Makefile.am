@@ -28,7 +28,6 @@ TESTS=							\
 	dispatch_apply				\
 	dispatch_api				\
 	dispatch_c99				\
-	dispatch_deadname			\
 	dispatch_debug				\
 	dispatch_queue_finalizer	\
 	dispatch_group				\
@@ -62,6 +61,11 @@ TESTS=							\
 	dispatch_vnode				\
 	dispatch_select
 
+if HAVE_MACH
+	TESTS+=						\
+		dispatch_deadname
+endif
+
 dispatch_c99_CFLAGS=$(AM_CFLAGS) -std=c99
 dispatch_plusplus_SOURCES=dispatch_plusplus.cpp
 dispatch_priority2_SOURCES=dispatch_priority.c
@@ -69,7 +73,7 @@ dispatch_priority2_CPPFLAGS=$(AM_CPPFLAGS) -DUSE_SET_TARGET_QUEUE=1
 
 AM_CPPFLAGS=-I$(top_builddir) -I$(top_srcdir)
 
-AM_CFLAGS=-Wall $(MARCH_FLAGS) $(CBLOCKS_FLAGS)
+AM_CFLAGS=-Wall $(MARCH_FLAGS) $(CBLOCKS_FLAGS) $(KQUEUE_CFLAGS)
 AM_OBJCFLAGS=-Wall $(MARCH_FLAGS) $(CBLOCKS_FLAGS) -fobjc-gc
 AM_CXXFLAGS=-Wall $(MARCH_FLAGS) $(CXXBLOCKS_FLAGS)
 

@@ -18,11 +18,12 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <sys/event.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <libkern/OSAtomic.h>
 #include <assert.h>
 #include <sys/sysctl.h>
 #include <stdarg.h>
@@ -110,10 +111,7 @@ main(void)
 		return 0;
 	}
 	initial = time(NULL);
-	uint64_t memsize;
-	size_t s = sizeof(memsize);
-	int rc = sysctlbyname("hw.memsize", &memsize, &s, NULL, 0);
-	assert(rc == 0);
+	uint64_t memsize = _dispatch_get_memory_size();
 	max_page_count = MIN(memsize, MAXMEM) / ALLOC_SIZE;
 	pages = calloc(max_page_count, sizeof(char*));
 
@@ -126,7 +124,7 @@ main(void)
 			test_skip("Memory pressure at start of test");
 			cleanup();
 		}
-		if (OSAtomicIncrement32Barrier(&handler_call_count) != NOTIFICATIONS) {
+		if (__sync_add_and_fetch(&handler_call_count, 1) != NOTIFICATIONS) {
 			log_msg("Ignoring vm pressure notification\n");
 			interval = 1;
 			return;
@@ -151,7 +149,7 @@ main(void)
 			}
 			bzero(p, ALLOC_SIZE);
 			pages[page_count] = p;
-			if (!(OSAtomicIncrement32Barrier(&page_count) % interval)) {
+			if (!(__sync_add_and_fetch(&page_count, 1) % interval)) {
 				log_msg("Allocated %ldMB\n", pg2mb(page_count));
 				usleep(200000);
 			}

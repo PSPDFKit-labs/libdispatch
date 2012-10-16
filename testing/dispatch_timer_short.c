@@ -18,13 +18,18 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#if HAVE_MACH
 #include <mach/mach_time.h>
-#include <libkern/OSAtomic.h>
+#else
+#include <time.h>
+#endif
 
 #include <dispatch/dispatch.h>
 
@@ -41,10 +46,16 @@ static dispatch_queue_t q;
 static dispatch_group_t g;
 
 static volatile int32_t count;
+#if HAVE_MACH
 static mach_timebase_info_data_t tbi;
+#endif
 static uint64_t start, last;
 
+#if HAVE_MACH
 #define elapsed_ms(x) (((now-(x))*tbi.numer/tbi.denom)/(1000ull*NSEC_PER_USEC))
+#else
+#define elapsed_ms(x) ((now - (x)) / (1000ull*NSEC_PER_USEC))
+#endif
 
 void
 test_fin(void *cxt)
@@ -94,7 +105,7 @@ test_short_timer(void)
 	test_ptr_notnull("dispatch_source_create", s);
 	dispatch_source_set_timer(s, DISPATCH_TIME_NOW, interval, 0);
 	dispatch_source_set_event_handler(s, ^{
-		uint64_t now = mach_absolute_time();
+		uint64_t now = _dispatch_monotonic_time();
 		if (!count) {
 			dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay),
 					dispatch_get_global_queue(0, 0), ^{
@@ -104,7 +115,7 @@ test_short_timer(void)
 			fprintf(stderr, "First timer callback  (after %4llu ms)\n",
 					elapsed_ms(start));
 		}
-		OSAtomicIncrement32(&count);
+		__sync_add_and_fetch(&count, 1);
 		if (elapsed_ms(last) >= 100) {
 			fprintf(stderr, "%5d timer callbacks (after %4llu ms)\n", count,
 					elapsed_ms(start));
@@ -114,7 +125,7 @@ test_short_timer(void)
 	dispatch_set_context(s, s);
 	dispatch_set_finalizer_f(s, test_fin);
 	fprintf(stderr, "Scheduling %llu us timer\n", interval/NSEC_PER_USEC);
-	start = last = mach_absolute_time();
+	start = last = _dispatch_monotonic_time();
 	dispatch_resume(s);
 }
 
@@ -122,7 +133,9 @@ int
 main(void)
 {
 	dispatch_test_start("Dispatch Short Timer"); // <rdar://problem/7765184>
+#if HAVE_MACH
 	mach_timebase_info(&tbi);
+#endif
 	test_short_timer();
 	dispatch_main();
 	return 0;

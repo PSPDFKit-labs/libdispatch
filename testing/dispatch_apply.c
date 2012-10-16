@@ -18,12 +18,13 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <dispatch/dispatch.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <libkern/OSAtomic.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
@@ -52,7 +53,7 @@ void busythread(void *ignored)
 	(void)ignored;
 	uint64_t i = 0, j = 0;
 
-	OSAtomicIncrement32(&busy_threads_started);
+	__sync_add_and_fetch(&busy_threads_started, 1);
 
 	for(i = 0; i < 2*ITERS_PER_SECOND; i++)
 	{
@@ -60,7 +61,7 @@ void busythread(void *ignored)
 		j += i;
 	}
 
-	OSAtomicIncrement32(&busy_threads_finished);
+	__sync_add_and_fetch(&busy_threads_finished, 1);
 }
 
 /*
@@ -73,9 +74,7 @@ void busythread(void *ignored)
  */
 void test_apply_contended(dispatch_queue_t dq)
 {
-	uint32_t activecpu;
-	size_t s = sizeof(activecpu);
-	sysctlbyname("hw.activecpu", &activecpu, &s, NULL, 0);
+	uint32_t activecpu = _dispatch_get_activecpu();
 	int tIndex, n_threads = activecpu;
 	dispatch_group_t grp = dispatch_group_create();
 
@@ -93,7 +92,7 @@ void test_apply_contended(dispatch_queue_t dq)
 
 	unsigned int before = busy_threads_started;
 	dispatch_apply(final, dq, ^(size_t i __attribute__((unused))) {
-		OSAtomicIncrement32(&count);
+		__sync_add_and_fetch(&count, 1);
 	});
 	unsigned int after = busy_threads_finished;
 
@@ -118,7 +117,7 @@ main(void)
 	test_ptr_notnull("dispatch_get_global_queue", queue);
 
 	dispatch_apply(final, queue, ^(size_t i __attribute__((unused))) {
-		OSAtomicIncrement32(&count);
+		__sync_add_and_fetch(&count, 1);
 	});
 	test_long("count", count, final);
 
@@ -126,7 +125,7 @@ main(void)
 	dispatch_apply(final, queue, ^(size_t i __attribute__((unused))) {
 		dispatch_apply(final, queue, ^(size_t ii __attribute__((unused))) {
 			dispatch_apply(final, queue, ^(size_t iii __attribute__((unused))) {
-				OSAtomicIncrement32(&count);
+				__sync_add_and_fetch(&count, 1);
 			});
 		});
 	});

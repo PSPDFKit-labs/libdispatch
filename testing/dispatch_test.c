@@ -18,6 +18,7 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
 #include "dispatch_test.h"
 #include "bsdtests.h"
 

@@ -18,13 +18,20 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
+#if HAVE_MACH
 #include <mach/mach.h>
 #include <mach/mach_time.h>
+#endif
 #include <dispatch/dispatch.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#if HAVE_TARGETCONDITIONALS_H
 #include <TargetConditionals.h>
+#endif
 
 #include <bsdtests.h>
 #include "dispatch_test.h"
@@ -42,7 +49,9 @@ static dispatch_queue_t queues[COUNT];
 static size_t lap_count_down = LAPS;
 static size_t count_down;
 static uint64_t start;
+#if HAVE_MACH
 static mach_timebase_info_data_t tbi;
+#endif
 
 static void do_test(void);
 
@@ -57,15 +66,17 @@ collect(void *context __attribute__((unused)))
 		return;
 	}
 
-	delta = mach_absolute_time() - start;
+	delta = _dispatch_monotonic_time() - start;
+#if HAVE_MACH
 	delta *= tbi.numer;
 	delta /= tbi.denom;
+#endif
 	math = delta;
 	math /= COUNT * COUNT * 2ul + COUNT * 2ul;
 
-	printf("lap: %ld\n", lap_count_down);
+	printf("lap: %zu\n", lap_count_down);
 	printf("count: %lu\n", COUNT);
-	printf("delta: %llu ns\n", delta);
+	printf("delta: %"PRIu64" ns\n", delta);
 	printf("math: %Lf ns / lap\n", math);
 
 	for (i = 0; i < COUNT; i++) {
@@ -127,19 +138,19 @@ void
 do_test(void)
 {
 	dispatch_queue_t soup = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0);
-	kern_return_t kr;
+#if HAVE_MACH
+	kern_return_t kr = mach_timebase_info(&tbi);
+	assert(kr == 0);
+#endif
 	char buf[1000];
 	size_t i;
 
 	count_down = COUNT;
 
-	kr = mach_timebase_info(&tbi);
-	assert(kr == 0);
-
-	start = mach_absolute_time();
+	start = _dispatch_monotonic_time();
 
 	for (i = 0; i < COUNT; i++) {
-		snprintf(buf, sizeof(buf), "com.example.starfish-node#%ld", i);
+		snprintf(buf, sizeof(buf), "com.example.starfish-node#%zu", i);
 		queues[i] = dispatch_queue_create(buf, NULL);
 		dispatch_suspend(queues[i]);
 		dispatch_set_target_queue(queues[i], soup);

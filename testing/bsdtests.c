@@ -18,15 +18,29 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <string.h>
+
+
+#if HAVE_CRT_EXTERNS_H
 #include <crt_externs.h>
+#else
+extern char **environ;
+#define _NSGetEnviron() &environ
+#endif
+
+#if HAVE_MACH
 #include <mach/mach_error.h>
+#endif
 #include <spawn.h>
 #include <inttypes.h>
 #include "bsdtests.h"
@@ -308,6 +322,7 @@ test_errno_format(long actual, long expected, const char *format, ...)
 	_test_errno(NULL, 0, desc, actual, expected);
 }
 
+#if HAVE_MACH
 void
 _test_mach_error(const char* file, long line, const char* desc,
 		mach_error_t actual, mach_error_t expected)
@@ -328,6 +343,7 @@ test_mach_error_format(mach_error_t actual, mach_error_t expected, const char *f
 	GENERATE_DESC
 	_test_mach_error(NULL, 0, desc, actual, expected);
 }
+#endif  // HAVE_MACH
 
 void
 _test_skip(const char* file, long line, const char* desc)
@@ -409,6 +425,10 @@ test_leaks_pid(const char *name, pid_t pid)
 	if (getenv("NOLEAKS")) {
 		return;
 	}
+
+	#if !HAVE_LEAKS
+		return;
+	#endif
 
 	if (!name) {
 		name = "Leaks";

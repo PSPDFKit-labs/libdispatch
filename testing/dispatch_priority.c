@@ -18,13 +18,17 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
 #include <stdio.h>
 #include <dispatch/dispatch.h>
 #include <dispatch/private.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <limits.h>
+#if HAVE_TARGETCONDITIONALS_H
 #include <TargetConditionals.h>
+#endif
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
@@ -75,9 +79,7 @@ n_blocks(void)
 	static dispatch_once_t pred;
 	static int n;
 	dispatch_once(&pred, ^{
-		size_t l = sizeof(n);
-		int rc = sysctlbyname("hw.ncpu", &n, &l, NULL, 0);
-		assert(rc == 0);
+		n = _dispatch_get_logicalcpu_max();
 		n *= 32;
 	});
 	return n;

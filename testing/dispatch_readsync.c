@@ -18,12 +18,17 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <dispatch/dispatch.h>
 #include <dispatch/private.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/sysctl.h>
+
 #include <assert.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <sys/param.h>	// for MIN()
+#include <sys/sysctl.h>
+#include <unistd.h>
 
 #include <bsdtests.h>
 #include "dispatch_test.h"
@@ -127,16 +132,22 @@ test_readsync(dispatch_queue_t rq, dispatch_queue_t wq, size_t n)
 	test_long("concurrent readers & writers", crw, 0);
 }
 
+
+#define DEFAULT_WQ_MAX_THREADS 100 	///< An entirely made-up figure.
+
 int
 main(void)
 {
 	dispatch_test_start("Dispatch Reader/Writer Queues");
 
-	uint32_t activecpu, wq_max_threads;
-	size_t s = sizeof(uint32_t);
-	sysctlbyname("hw.activecpu", &activecpu, &s, NULL, 0);
+	uint32_t activecpu = _dispatch_get_activecpu();
+	uint32_t wq_max_threads = DEFAULT_WQ_MAX_THREADS;
+
+#if HAVE_SYSCTLBYNAME
 	s = sizeof(uint32_t);
-	sysctlbyname("kern.wq_max_threads", &wq_max_threads, &s, NULL, 0);
+	if (0 != sysctlbyname("kern.wq_max_threads", &wq_max_threads, &s, NULL, 0))
+		wq_max_threads = DEFAULT_WQ_MAX_THREADS;
+#endif
 
 	// cap at wq_max_threads - one wq thread for dq - one wq thread for manager
 	size_t n = MIN(activecpu * NTHREADS, wq_max_threads - 2);

@@ -18,6 +18,7 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -37,7 +38,7 @@ void finish(void* cxt);
 void
 stage1(int stage)
 {
-	const char *path = "/dev/random";
+	const char *path = "/dev/urandom";
 
 	int fd = open(path, O_RDONLY);
 	if (fd == -1)

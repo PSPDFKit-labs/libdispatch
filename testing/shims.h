@@ -25,6 +25,8 @@
 #include "shims/asprintf.h"
 #include "shims/arc4random.h"
 #include "shims/fgetln.h"
+#include "shims/hw_config.h"
+#include "shims/time.h"
 
 #endif /* __DISPATCH_TESTS_OS_SHIMS__ */
 

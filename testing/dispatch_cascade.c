@@ -18,6 +18,8 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
+#include <config/config.h>
+
 #include <stdio.h>
 #include <dispatch/dispatch.h>
 #include <unistd.h>
@@ -79,7 +81,7 @@ histogram(void)
 		}
 	}
 
-	printf("maxcount = %ld\n", maxcount);
+	printf("maxcount = %zu\n", maxcount);
 
 	size_t x,y;
 	for (y = 20; y > 0; --y) {

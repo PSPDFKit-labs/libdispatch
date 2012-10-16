@@ -9,8 +9,8 @@ SUBDIRS=					\
 	man						\
 	os						\
 	private					\
-	src						
-#	testing
+  src						\
+  testing
 
 EXTRA_DIST=					\
 	LICENSE					\

@@ -18,6 +18,7 @@ libdispatch_la_SOURCES=		\
 	semaphore.c				\
 	source.c				\
 	time.c					\
+	transform.c				\
 	protocol.defs			\
 	provider.d				\
 	data_internal.h			\

@@ -128,7 +128,7 @@ AC_CHECK_HEADER(sys/event.h, [],
 # Checks for header files.
 #
 AC_HEADER_STDC
-AC_CHECK_HEADERS([TargetConditionals.h pthread_np.h malloc/malloc.h libkern/OSCrossEndian.h libkern/OSAtomic.h])
+AC_CHECK_HEADERS([TargetConditionals.h pthread_np.h malloc/malloc.h libkern/OSCrossEndian.h libkern/OSAtomic.h libkern/OSByteOrder.h])
 
 # hack for pthread_machdep.h's #include <System/machine/cpu_capabilities.h>
 AS_IF([test -n "$apple_xnu_source_osfmk_path"], [

@@ -20,7 +20,24 @@
 
 #include "internal.h"
 
+#if HAVE_LIBKERN_OSBYTEORDER_H
 #include <libkern/OSByteOrder.h>
+#else
+
+#include <endian.h>
+
+enum {
+	OSUnknownByteOrder,
+	OSLittleEndian,
+	OSBigEndian
+};
+
+#define OSSwapLittleToHostInt16(x)	le16toh(x)
+#define OSSwapBigToHostInt16(x)		be16toh(x)
+#define OSSwapHostToLittleInt16(x)	htole16(x)
+#define OSSwapHostToBigInt16(x)		htobe16(x)
+
+#endif
 
 #if defined(__LITTLE_ENDIAN__)
 #define DISPATCH_DATA_FORMAT_TYPE_UTF16_HOST DISPATCH_DATA_FORMAT_TYPE_UTF16LE

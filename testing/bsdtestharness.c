@@ -115,9 +115,9 @@ main(int argc, char *argv[])
 		int res2 = wait4(pid, &status, 0, &usage);
 		assert(res2 != -1);
 		test_long("Process exited", (WIFEXITED(status) && WEXITSTATUS(status) && WEXITSTATUS(status) != 0xff) || WIFSIGNALED(status), 0);
-		printf("[PERF]\twall time: %ld.%06d\n", tv_wall.tv_sec, tv_wall.tv_usec);
-		printf("[PERF]\tuser time: %ld.%06d\n", usage.ru_utime.tv_sec, usage.ru_utime.tv_usec);
-		printf("[PERF]\tsystem time: %ld.%06d\n", usage.ru_stime.tv_sec, usage.ru_stime.tv_usec);
+		printf("[PERF]\twall time: %ld.%06ld\n", tv_wall.tv_sec, (long)tv_wall.tv_usec);
+		printf("[PERF]\tuser time: %ld.%06ld\n", usage.ru_utime.tv_sec, (long)usage.ru_utime.tv_usec);
+		printf("[PERF]\tsystem time: %ld.%06ld\n", usage.ru_stime.tv_sec, (long)usage.ru_stime.tv_usec);
 		printf("[PERF]\tmax resident set size: %ld\n", usage.ru_maxrss);
 		printf("[PERF]\tpage faults: %ld\n", usage.ru_majflt);
 		printf("[PERF]\tswaps: %ld\n", usage.ru_nswap);

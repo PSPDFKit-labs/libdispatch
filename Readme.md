@@ -5,7 +5,7 @@ Later revisions of [libdispatch](http://libdispatch.macosforge.org) at Apple's [
 
 This repo applies some patches by Mark Heily, taken from [his post to the libdispatch mailing list](http://lists.macosforge.org/pipermail/libdispatch-dev/2012-August/000676.html), along with some other fixes that I've cobbled together.
 
-I've also added missing `_f` variants for several functions in `data.h` and `io.h` that took dispatch blocks only, which allows you to make use of Dispatch Data and Dispatch I/O with compilers like GCC that don't support blocks. However, the library itself must still be built with Clang, as libdispatch makes use of blocks internally.
+I've also added missing `_f` variants for several functions in `data.h` and `io.h` that took dispatch blocks only; this allows you to make use of Dispatch Data and Dispatch I/O with compilers like GCC that don't support blocks. However, the library itself must still be built with Clang, as libdispatch makes use of blocks internally.
 
 
 Prerequisities

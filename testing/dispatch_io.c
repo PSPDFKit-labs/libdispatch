@@ -370,8 +370,14 @@ test_async_read(char *path, size_t size, int option, dispatch_queue_t queue,
 {
 	int fd = open(path, O_RDONLY);
 	if (fd == -1) {
-		test_errno("Failed to open file", errno, 0);
-		test_stop();
+		if (errno == EACCES) {
+			// If we don't have permission, just pretend we did the read.
+			dispatch_async(queue, ^{ process_data(size); });
+			return;
+		} else {
+			test_errno("Failed to open file", errno, 0);
+			test_stop();
+		}
 	}
 #ifdef F_GLOBAL_NOCACHE
 	// disable caching also for extra fd opened by dispatch_io_create_with_path
@@ -477,10 +483,17 @@ test_read_dirs(char **paths, dispatch_queue_t queue, dispatch_group_t g,
 	unsigned int files_opened = 0;
 	size_t size, total_size = 0;
 	FTSENT *node;
-	while ((node = fts_read(tree)) &&
-			!(node->fts_info == FTS_ERR || node->fts_info == FTS_NS)) {
-		if (node->fts_level > 0 && node->fts_name[0] == '.') {
+	while ((node = fts_read(tree))) { 
+		if (node->fts_info == FTS_ERR || node->fts_info == FTS_NS) {
+			if (node->fts_errno == EACCES) {
+				fts_set(tree, node, FTS_SKIP);
+			} else {
+				break;
+			}
+
+		} else if (node->fts_level > 0 && node->fts_name[0] == '.') {
 			fts_set(tree, node, FTS_SKIP);
+
 		} else if (node->fts_info == FTS_F) {
 			dispatch_group_enter(g);
 			dispatch_semaphore_wait(s, DISPATCH_TIME_FOREVER);
@@ -495,7 +508,7 @@ test_read_dirs(char **paths, dispatch_queue_t queue, dispatch_group_t g,
 		}
 	}
 	if ((!node && errno) || (node && (node->fts_info == FTS_ERR ||
-			node->fts_info == FTS_NS))) {
+			node->fts_info == FTS_NS) && node->fts_errno != EACCES)) {
 		test_errno("fts_read failed", !node ? errno : node->fts_errno, 0);
 		test_stop();
 	}

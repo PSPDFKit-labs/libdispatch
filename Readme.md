@@ -55,8 +55,8 @@ Demo
         int fd = (intptr_t)context;
         close(fd);
         
-        dispatch_write_f(STDOUT_FILENO, data, dispatch_get_main_queue(),
-                         NULL, write_completion_handler);
+        dispatch_write_f_np(STDOUT_FILENO, data, dispatch_get_main_queue(),
+                            NULL, write_completion_handler);
     }
      
     int main(int argc, const char *argv[]) {
@@ -70,7 +70,7 @@ Demo
 
         int fd = open("dispatch_test.c", O_RDONLY);
 
-        dispatch_read_f(fd, SIZE_MAX, dispatch_get_main_queue(), (void *)(intptr_t)fd,
+        dispatch_read_f_np(fd, SIZE_MAX, dispatch_get_main_queue(), (void *)(intptr_t)fd,
                         read_completion_handler);
 
         dispatch_main();
@@ -78,5 +78,5 @@ Demo
     }
     EOF
 
-    clang dispatch_test.c -I/usr/local/include -ldispatch -o dispatchTest
+    clang dispatch_test.c -I/usr/local/include -L/usr/local/lib -ldispatch -o dispatchTest
     ./dispatchTest

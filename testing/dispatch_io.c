@@ -446,7 +446,7 @@ test_async_read(char *path, size_t size, int option, dispatch_queue_t queue,
 			dispatch_io_set_interval(io, 20 * NSEC_PER_SEC,
 					DISPATCH_IO_STRICT_INTERVAL);
 
-			dispatch_io_read(io, 0, size, queue,
+			dispatch_io_read(io, 0, SIZE_MAX, queue,
 					^(bool done, dispatch_data_t data, int error) {
 				if (!done && !error && !dispatch_data_get_size(data)) {
 					// Timer fired, and no progress from last delivery

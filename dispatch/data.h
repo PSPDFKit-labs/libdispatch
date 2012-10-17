@@ -74,11 +74,10 @@ DISPATCH_EXPORT const dispatch_block_t _dispatch_data_destructor_free;
 /*!
  * @const DISPATCH_DATA_DESTRUCTOR_FREE_F
  * @discussion The destructor for dispatch data objects created from a malloc'd
- * buffer. Pass to dispatch_data_create_f() to indicate that the supplied buffer
+ * buffer. Pass to dispatch_data_create_f_np() to indicate that the supplied buffer
  * was allocated by the malloc() family and should be destroyed with free(3).
  */
 #define DISPATCH_DATA_DESTRUCTOR_FREE_F (&_dispatch_data_destructor_free_f)
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT void _dispatch_data_destructor_free_f(void*);
 
 /*!
@@ -134,10 +133,9 @@ dispatch_data_create(const void *buffer,
  *			is no longer needed.
  * @result		A newly created dispatch data object.
  */
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_RETURNS_RETAINED DISPATCH_WARN_RESULT DISPATCH_NOTHROW
 dispatch_data_t
-dispatch_data_create_f(const void *buffer,
+dispatch_data_create_f_np(const void *buffer,
   size_t size,
   dispatch_queue_t queue,
   void *context,
@@ -282,7 +280,7 @@ dispatch_data_apply(dispatch_data_t data, dispatch_data_applier_t applier);
  * @param buffer  The location of the memory for the current region.
  * @param size    The size of the memory for the current region.
  * @param context The user-defined context pointer passed to
- *                dispatch_data_apply_f
+ *                dispatch_data_apply_f_np
  * @result    A Boolean indicating whether traversal should continue.
  */
 typedef bool (*dispatch_data_applier_function_t)(dispatch_data_t region,
@@ -291,10 +289,9 @@ typedef bool (*dispatch_data_applier_function_t)(dispatch_data_t region,
   size_t size,
   void *context);
 
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL3 DISPATCH_NOTHROW
 bool
-dispatch_data_apply_f(dispatch_data_t data,
+dispatch_data_apply_f_np(dispatch_data_t data,
   void *context,
   dispatch_data_applier_function_t applier);
  

@@ -27,7 +27,7 @@ _dispatch_data_destructor_free_f(void *context DISPATCH_UNUSED)
 }
 
 dispatch_data_t
-dispatch_data_create_f(const void *buffer, size_t size, dispatch_queue_t queue,
+dispatch_data_create_f_np(const void *buffer, size_t size, dispatch_queue_t queue,
     void *destructor_context, dispatch_function_t destructor)
 {
   dispatch_block_t blockDestructor;
@@ -46,7 +46,7 @@ dispatch_data_create_f(const void *buffer, size_t size, dispatch_queue_t queue,
 }
 
 bool
-dispatch_data_apply_f(dispatch_data_t data, void *context,
+dispatch_data_apply_f_np(dispatch_data_t data, void *context,
     dispatch_data_applier_function_t applier)
 {
   return dispatch_data_apply(data,

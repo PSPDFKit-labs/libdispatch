@@ -109,10 +109,9 @@ dispatch_read(dispatch_fd_t fd,
 	void (^handler)(dispatch_data_t data, int error));
 #endif
 
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL3 DISPATCH_NONNULL5 DISPATCH_NOTHROW
 void
-dispatch_read_f(dispatch_fd_t fd,
+dispatch_read_f_np(dispatch_fd_t fd,
   size_t length,
   dispatch_queue_t queue,
   void *context,
@@ -160,11 +159,10 @@ dispatch_write(dispatch_fd_t fd,
 	void (^handler)(dispatch_data_t data, int error));
 #endif
 
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL2 DISPATCH_NONNULL3 DISPATCH_NONNULL5
 DISPATCH_NOTHROW
 void
-dispatch_write_f(dispatch_fd_t fd,
+dispatch_write_f_np(dispatch_fd_t fd,
   dispatch_data_t data,
   dispatch_queue_t queue,
   void *context,
@@ -257,11 +255,10 @@ dispatch_io_create(dispatch_io_type_t type,
 	void (^cleanup_handler)(int error));
 #endif
 
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_MALLOC DISPATCH_RETURNS_RETAINED DISPATCH_WARN_RESULT
 DISPATCH_WARN_RESULT DISPATCH_NOTHROW
 dispatch_io_t
-dispatch_io_create_f(dispatch_io_type_t type,
+dispatch_io_create_f_np(dispatch_io_type_t type,
   dispatch_fd_t fd,
   dispatch_queue_t queue,
   void *context,
@@ -305,11 +302,10 @@ dispatch_io_create_with_path(dispatch_io_type_t type,
 	void (^cleanup_handler)(int error));
 #endif
 
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL2 DISPATCH_MALLOC DISPATCH_RETURNS_RETAINED
 DISPATCH_WARN_RESULT DISPATCH_NOTHROW
 dispatch_io_t
-dispatch_io_create_with_path_f(dispatch_io_type_t type,
+dispatch_io_create_with_path_f_np(dispatch_io_type_t type,
   const char *path, int oflag, mode_t mode,
   dispatch_queue_t queue,
   void *context,
@@ -357,11 +353,10 @@ dispatch_io_create_with_io(dispatch_io_type_t type,
 	void (^cleanup_handler)(int error));
 #endif
 
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL2 DISPATCH_MALLOC DISPATCH_RETURNS_RETAINED
 DISPATCH_WARN_RESULT DISPATCH_NOTHROW
 dispatch_io_t
-dispatch_io_create_with_io_f(dispatch_io_type_t type,
+dispatch_io_create_with_io_f_np(dispatch_io_type_t type,
   dispatch_io_t io,
   dispatch_queue_t queue,
   void *context,
@@ -421,11 +416,10 @@ dispatch_io_read(dispatch_io_t channel,
 	dispatch_io_handler_t io_handler);
 #endif
 
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL4 DISPATCH_NONNULL6
 DISPATCH_NOTHROW
 void
-dispatch_io_read_f(dispatch_io_t channel,
+dispatch_io_read_f_np(dispatch_io_t channel,
   off_t offset,
   size_t length,
   dispatch_queue_t queue,
@@ -487,11 +481,10 @@ dispatch_io_write(dispatch_io_t channel,
 	dispatch_io_handler_t io_handler);
 #endif
 
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL3 DISPATCH_NONNULL4
 DISPATCH_NONNULL6 DISPATCH_NOTHROW
 void
-dispatch_io_write_f(dispatch_io_t channel,
+dispatch_io_write_f_np(dispatch_io_t channel,
   off_t offset,
   dispatch_data_t data,
   dispatch_queue_t queue,
@@ -559,10 +552,9 @@ void
 dispatch_io_barrier(dispatch_io_t channel, dispatch_block_t barrier);
 #endif
 
-__OSX_AVAILABLE_STARTING(__MAC_10_7,__IPHONE_5_0)
 DISPATCH_EXPORT DISPATCH_NONNULL1 DISPATCH_NONNULL3 DISPATCH_NOTHROW
 void
-dispatch_io_barrier_f(dispatch_io_t channel,
+dispatch_io_barrier_f_np(dispatch_io_t channel,
   void *context, 
   dispatch_function_t barrier);
 

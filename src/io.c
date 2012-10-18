@@ -1915,7 +1915,9 @@ _dispatch_operation_perform(dispatch_operation_t op)
 			} else {
 				op->buf_siz = max_buf_siz;
 			}
-			op->buf = valloc(op->buf_siz);
+			while (!(op->buf = valloc(op->buf_siz))) {
+				op->buf_siz /= 2;
+			}
 			_dispatch_io_debug("buffer allocated", op->fd_entry->fd);
 		} else if (op->direction == DOP_DIR_WRITE) {
 			// Always write the first data piece, if that is smaller than a

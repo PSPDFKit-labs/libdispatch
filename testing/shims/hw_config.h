@@ -19,28 +19,35 @@
 #ifndef __DISPATCH_TESTS_SHIMS_HW_CONFIG
 #define __DISPATCH_TESTS_SHIMS_HW_CONFIG
 
+#include <config/config.h>
+
 #include <assert.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <unistd.h>
+
+#if HAVE_SYSCTLBYNAME
+#include <sys/sysctl.h>
+#endif
 
 static inline uint64_t
 _dispatch_get_memory_size() {
 #if HAVE_SYSCTLBYNAME
-  uint64_t memsize;
-  size_t s = sizeof(memsize);
-  int rc = sysctlbyname("hw.memsize", &memsize, &s, NULL, 0);
-  assert(rc == 0);
-  return memsize;
+	uint64_t memsize;
+	size_t s = sizeof(memsize);
+	int rc = sysctlbyname("hw.memsize", &memsize, &s, NULL, 0);
+	assert(rc == 0);
+	return memsize;
 
-#elif defined(_SC_PHYS_PAGES)
-  long num_pages = sysconf(_SC_PHYS_PAGES);
-  long page_size = sysconf(_SC_PAGESIZE);
-  assert(num_pages != -1 && page_size != -1);
+#elif HAVE_SYSCONF && defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
+	long num_pages = sysconf(_SC_PHYS_PAGES);
+	long page_size = sysconf(_SC_PAGESIZE);
+	assert(num_pages != -1 && page_size != -1);
 
-  return (uint64_t)num_pages * (uint64_t)page_size;
+	return (uint64_t)num_pages * (uint64_t)page_size;
 
 #else
-  #error "Don't know how to get memory size on this platform."
+	#error "no supported way to query memory size"
 #endif
 }
 
@@ -58,48 +65,53 @@ _dispatch_get_memory_size() {
 #define DISPATCH_SYSCTL_ACTIVE_CPUS   "kern.smp.cpus"
 #endif
 
+
+#define DISPATCH_STATIC_ASSERT(e) \
+	char __compile_time_assert__[(bool)(e) ? -1 : 1]; \
+	(void)__compile_time_assert__;
+
 static inline uint32_t
 _dispatch_get_logicalcpu_max()
 {
-  uint32_t val = 1;
+	uint32_t val = 1;
 #if defined(_COMM_PAGE_LOGICAL_CPUS)
-  uint8_t* u8val = (uint8_t*)(uintptr_t)_COMM_PAGE_LOGICAL_CPUS;
-  val = (uint32_t)*u8val;
+	uint8_t* u8val = (uint8_t*)(uintptr_t)_COMM_PAGE_LOGICAL_CPUS;
+	val = (uint32_t)*u8val;
 #elif defined(DISPATCH_SYSCTL_LOGICAL_CPUS)
-  size_t valsz = sizeof(val);
-  int ret = sysctlbyname(DISPATCH_SYSCTL_LOGICAL_CPUS,
-      &val, &valsz, NULL, 0);
-  (void)dispatch_assume_zero(ret);
-  (void)dispatch_assume(valsz == sizeof(uint32_t));
+	size_t valsz = sizeof(val);
+	int ret = sysctlbyname(DISPATCH_SYSCTL_LOGICAL_CPUS,
+			&val, &valsz, NULL, 0);
+	assert(0 == ret);
+	DISPATCH_STATIC_ASSERT(valsz == sizeof(uint32_t));
 #elif HAVE_SYSCONF && defined(_SC_NPROCESSORS_ONLN)
-  int ret = (int)sysconf(_SC_NPROCESSORS_ONLN);
-  val = ret < 0 ? 1 : ret;
+	int ret = (int)sysconf(_SC_NPROCESSORS_ONLN);
+	val = ret < 0 ? 1 : ret;
 #else
 #warning "no supported way to query logical CPU count"
 #endif
-  return val;
+	return val;
 }
 
 static inline uint32_t
 _dispatch_get_activecpu()
 {
-  uint32_t val = 1;
+	uint32_t val = 1;
 #if defined(_COMM_PAGE_ACTIVE_CPUS)
-  uint8_t* u8val = (uint8_t*)(uintptr_t)_COMM_PAGE_ACTIVE_CPUS;
-  val = (uint32_t)*u8val;
+	uint8_t* u8val = (uint8_t*)(uintptr_t)_COMM_PAGE_ACTIVE_CPUS;
+	val = (uint32_t)*u8val;
 #elif defined(DISPATCH_SYSCTL_ACTIVE_CPUS)
-  size_t valsz = sizeof(val);
-  int ret = sysctlbyname(DISPATCH_SYSCTL_ACTIVE_CPUS,
-      &val, &valsz, NULL, 0);
-  (void)dispatch_assume_zero(ret);
-  (void)dispatch_assume(valsz == sizeof(uint32_t));
+	size_t valsz = sizeof(val);
+	int ret = sysctlbyname(DISPATCH_SYSCTL_ACTIVE_CPUS,
+			&val, &valsz, NULL, 0);
+	assert(0 == ret);
+	DISPATCH_STATIC_ASSERT(valsz == sizeof(uint32_t));
 #elif HAVE_SYSCONF && defined(_SC_NPROCESSORS_ONLN)
-  int ret = (int)sysconf(_SC_NPROCESSORS_ONLN);
-  val = ret < 0 ? 1 : ret;
+	int ret = (int)sysconf(_SC_NPROCESSORS_ONLN);
+	val = ret < 0 ? 1 : ret;
 #else
 #warning "no supported way to query active CPU count"
 #endif
-  return val;
+	return val;
 }
 
 #endif  // __DISPATCH_TESTS_SHIMS_HW_CONFIG

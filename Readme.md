@@ -1,7 +1,7 @@
 libdispatch for Linux
 =====================
 
-Later revisions of [libdispatch](http://libdispatch.macosforge.org) at Apple's [official SVN repository](http://svn.macosforge.org/repository/libdispatch) don't build on Linux; the last one that works out-of-the-box is `r199`, but that revision doesn't contain any of the nifty APIs added in OS X Lion, e.g. dispatch I/O channels and concurrent private queues.
+Later revisions of [libdispatch](http://libdispatch.macosforge.org) at Apple's [official SVN repository](http://libdispatch.macosforge.org/trac/browser) don't build on Linux; the last one that works out-of-the-box is `r199`, but that revision doesn't contain any of the nifty APIs added in OS X Lion, e.g. dispatch I/O channels and concurrent private queues.
 
 This repo applies some patches by Mark Heily, taken from [his post to the libdispatch mailing list](http://lists.macosforge.org/pipermail/libdispatch-dev/2012-August/000676.html), along with some other fixes that I've cobbled together.
 

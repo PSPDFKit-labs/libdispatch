@@ -876,6 +876,54 @@ DISPATCH_NOTHROW
 void *
 dispatch_get_specific(const void *key);
 
+#if __linux__
+/*!
+ * @functiongroup Third-party runloop integration
+ * This Linux-specific API provides integration of the main queue with
+ * a third-party event loop, such as those provided by GLib or Qt. 
+ */
+
+/*!
+ * @function dispatch_get_main_queue_eventfd_np
+ *
+ * @abstract
+ * Returns an eventfd file descriptor--see eventfd(2)--that becomes readable
+ * whenever there are pending tasks on libdispatch's main queue.
+ *
+ * @discussion
+ * When this file descriptor becomes readable, you should call eventfd_read(2)
+ * on it to acknowledge the wakeup and then call dispatch_main_queue_drain_np()
+ * to perform the pending tasks.
+ *
+ * @availability
+ * Linux only.
+ * 
+ * @result
+ * A file descriptor that can be monitored for reading with select(), epoll(),
+ * etc.
+ */
+DISPATCH_EXPORT DISPATCH_WARN_RESULT DISPATCH_NOTHROW
+int
+dispatch_get_main_queue_eventfd_np();
+
+/*!
+ * @function dispatch_main_queue_drain_np
+ *
+ * @abstract
+ * Executes pending tasks enqueued to libdispatch's main queue.
+ *
+ * @availability
+ * Linux only.
+ * 
+ * @discussion
+ * Your event loop should invoke this function to execute the pending tasks on
+ * libdispatch's main queue.
+ */
+DISPATCH_EXPORT DISPATCH_NOTHROW
+void
+dispatch_main_queue_drain_np();
+#endif
+
 __END_DECLS
 
 #endif

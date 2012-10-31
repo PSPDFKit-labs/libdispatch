@@ -23,6 +23,11 @@
 #include "protocol.h"
 #endif
 
+#if __linux__
+#include <sys/eventfd.h>
+#define DISPATCH_LINUX_COMPAT 1
+#endif
+
 #if (!HAVE_PTHREAD_WORKQUEUES || DISPATCH_DEBUG) && \
 		!defined(DISPATCH_ENABLE_THREAD_POOL)
 #define DISPATCH_ENABLE_THREAD_POOL 1
@@ -52,14 +57,23 @@ static void *_dispatch_worker_thread(void *context);
 static int _dispatch_pthread_sigmask(int how, sigset_t *set, sigset_t *oset);
 #endif
 
+#if DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
+static dispatch_queue_t _dispatch_queue_wakeup_main(void);
+static void _dispatch_main_queue_drain(void);
+#endif
+
 #if DISPATCH_COCOA_COMPAT
 static unsigned int _dispatch_worker_threads;
 static dispatch_once_t _dispatch_main_q_port_pred;
 static mach_port_t main_q_port;
 
 static void _dispatch_main_q_port_init(void *ctxt);
-static dispatch_queue_t _dispatch_queue_wakeup_main(void);
-static void _dispatch_main_queue_drain(void);
+#endif
+
+#if DISPATCH_LINUX_COMPAT
+static dispatch_once_t _dispatch_main_q_eventfd_pred;
+static void _dispatch_main_q_eventfd_init(void *ctxt);
+static int main_q_eventfd = -1;
 #endif
 
 #pragma mark -
@@ -1414,7 +1428,7 @@ struct dispatch_barrier_sync_slow_s {
 
 struct dispatch_barrier_sync_slow2_s {
 	dispatch_queue_t dbss2_dq;
-#if DISPATCH_COCOA_COMPAT
+#if DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
 	dispatch_function_t dbss2_func;
 	void *dbss2_ctxt;
 #endif
@@ -1459,7 +1473,7 @@ _dispatch_barrier_sync_f_slow_invoke(void *ctxt)
 	struct dispatch_barrier_sync_slow2_s *dbss2 = ctxt;
 
 	dispatch_assert(dbss2->dbss2_dq == _dispatch_queue_get_current());
-#if DISPATCH_COCOA_COMPAT
+#if DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
 	// When the main queue is bound to the main thread
 	if (dbss2->dbss2_dq == &_dispatch_main_q && pthread_main_np()) {
 		dbss2->dbss2_func(dbss2->dbss2_ctxt);
@@ -1488,7 +1502,7 @@ _dispatch_barrier_sync_f_slow(dispatch_queue_t dq, void *ctxt,
 
 	struct dispatch_barrier_sync_slow2_s dbss2 = {
 		.dbss2_dq = dq,
-#if DISPATCH_COCOA_COMPAT
+#if DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
 		.dbss2_func = func,
 		.dbss2_ctxt = ctxt,
 #endif
@@ -1505,7 +1519,7 @@ _dispatch_barrier_sync_f_slow(dispatch_queue_t dq, void *ctxt,
 	_dispatch_thread_semaphore_wait(dbss2.dbss2_sema);
 	_dispatch_put_thread_semaphore(dbss2.dbss2_sema);
 
-#if DISPATCH_COCOA_COMPAT
+#if DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
 	// Main queue bound to main thread
 	if (dbss2.dbss2_func == NULL) {
 		return;
@@ -1915,7 +1929,7 @@ _dispatch_wakeup(dispatch_object_t dou)
 	// if the source is suspended or canceled.
 	if (!dispatch_atomic_cmpxchg2o(dou._do, do_suspend_cnt, 0,
 			DISPATCH_OBJECT_SUSPEND_LOCK)) {
-#if DISPATCH_COCOA_COMPAT
+#if DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
 		if (dou._dq == &_dispatch_main_q) {
 			return _dispatch_queue_wakeup_main();
 		}
@@ -1930,32 +1944,44 @@ _dispatch_wakeup(dispatch_object_t dou)
 				// probe does
 }
 
-#if DISPATCH_COCOA_COMPAT
+#if DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
 DISPATCH_NOINLINE
 dispatch_queue_t
 _dispatch_queue_wakeup_main(void)
 {
+#if DISPATCH_COCOA_COMPAT
 	kern_return_t kr;
 
 	dispatch_once_f(&_dispatch_main_q_port_pred, NULL,
 			_dispatch_main_q_port_init);
-	if (!main_q_port) {
-		return NULL;
-	}
-	kr = _dispatch_send_wakeup_main_thread(main_q_port, 0);
+	if (main_q_port) {
+		kr = _dispatch_send_wakeup_main_thread(main_q_port, 0);
 
-	switch (kr) {
-	case MACH_SEND_TIMEOUT:
-	case MACH_SEND_TIMED_OUT:
-	case MACH_SEND_INVALID_DEST:
-		break;
-	default:
-		(void)dispatch_assume_zero(kr);
-		break;
+		switch (kr) {
+		case MACH_SEND_TIMEOUT:
+		case MACH_SEND_TIMED_OUT:
+		case MACH_SEND_INVALID_DEST:
+			break;
+		default:
+			(void)dispatch_assume_zero(kr);
+			break;
+		}
 	}
+#endif
+#if DISPATCH_LINUX_COMPAT
+	dispatch_once_f(&_dispatch_main_q_eventfd_pred, NULL,
+			_dispatch_main_q_eventfd_init);
+	if (main_q_eventfd != -1) {
+		int result;
+		do {
+			result = eventfd_write(main_q_eventfd, 1);
+		} while (result == -1 && errno == EINTR);
+		(void)dispatch_assume_zero(result);
+	}
+#endif
 	return NULL;
 }
-#endif
+#endif  // DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
 
 DISPATCH_NOINLINE
 static void
@@ -2195,7 +2221,7 @@ _dispatch_queue_serial_drain_till_empty(dispatch_queue_t dq)
 	_dispatch_force_cache_cleanup();
 }
 
-#if DISPATCH_COCOA_COMPAT
+#if DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
 void
 _dispatch_main_queue_drain(void)
 {
@@ -2494,6 +2520,19 @@ _dispatch_pthread_sigmask(int how, sigset_t *set, sigset_t *oset)
 
 static bool _dispatch_program_is_probably_callback_driven;
 
+#if DISPATCH_COCOA_COMPAT || DISPATCH_LINUX_COMPAT
+static bool main_q_is_draining;
+
+// 6618342 Contact the team that owns the Instrument DTrace probe before
+//         renaming this symbol
+DISPATCH_NOINLINE
+static void
+_dispatch_queue_set_mainq_drain_state(bool arg)
+{
+	main_q_is_draining = arg;
+}
+#endif
+
 #if DISPATCH_COCOA_COMPAT
 static void
 _dispatch_main_q_port_init(void *ctxt DISPATCH_UNUSED)
@@ -2521,17 +2560,6 @@ _dispatch_get_main_queue_port_4CF(void)
 	return main_q_port;
 }
 
-static bool main_q_is_draining;
-
-// 6618342 Contact the team that owns the Instrument DTrace probe before
-//         renaming this symbol
-DISPATCH_NOINLINE
-static void
-_dispatch_queue_set_mainq_drain_state(bool arg)
-{
-	main_q_is_draining = arg;
-}
-
 void
 _dispatch_main_queue_callback_4CF(mach_msg_header_t *msg DISPATCH_UNUSED)
 {
@@ -2545,19 +2573,50 @@ _dispatch_main_queue_callback_4CF(mach_msg_header_t *msg DISPATCH_UNUSED)
 
 #endif
 
+#if DISPATCH_LINUX_COMPAT
+int
+dispatch_get_main_queue_eventfd_np()
+{
+	dispatch_once_f(&_dispatch_main_q_eventfd_pred, NULL,
+		_dispatch_main_q_eventfd_init);
+	return main_q_eventfd;
+}
+
+void
+dispatch_main_queue_drain_np()
+{
+	if (!pthread_main_np()) {
+		DISPATCH_CLIENT_CRASH("dispatch_main_queue_drain_np() must be called on "
+		                      "the main thread");
+	}
+
+	if (main_q_is_draining) {
+		return;
+	}
+	_dispatch_queue_set_mainq_drain_state(true);
+	_dispatch_main_queue_drain();
+	_dispatch_queue_set_mainq_drain_state(false);
+}
+
+static
+void _dispatch_main_q_eventfd_init(void *ctxt DISPATCH_UNUSED)
+{
+	_dispatch_safe_fork = false;
+	main_q_eventfd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+	(void)dispatch_assume(main_q_eventfd != -1);
+	_dispatch_program_is_probably_callback_driven = true;
+}
+#endif
+
 void
 dispatch_main(void)
 {
-#if HAVE_PTHREAD_MAIN_NP
 	if (pthread_main_np()) {
-#endif
 		_dispatch_program_is_probably_callback_driven = true;
 		pthread_exit(NULL);
 		DISPATCH_CRASH("pthread_exit() returned");
-#if HAVE_PTHREAD_MAIN_NP
 	}
 	DISPATCH_CLIENT_CRASH("dispatch_main() must be called on the main thread");
-#endif
 }
 
 DISPATCH_NOINLINE DISPATCH_NORETURN
@@ -2622,6 +2681,16 @@ _dispatch_queue_cleanup2(void)
 				-1);
 		DISPATCH_VERIFY_MIG(kr);
 		(void)dispatch_assume_zero(kr);
+	}
+#endif
+#if DISPATCH_LINUX_COMPAT
+	dispatch_once_f(&_dispatch_main_q_eventfd_pred, NULL,
+			_dispatch_main_q_eventfd_init);
+	int fd = main_q_eventfd;
+	main_q_eventfd = -1;
+
+	if (fd != -1) {
+		close(fd);
 	}
 #endif
 }

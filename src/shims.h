@@ -54,6 +54,7 @@ void __builtin_trap(void);
 #include "shims/hw_config.h"
 #include "shims/malloc_zone.h"
 #include "shims/perfmon.h"
+#include "shims/pthread_main_np.h"
 #include "shims/time.h"
 #include "shims/tsd.h"
 

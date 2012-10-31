@@ -1,12 +1,15 @@
 libdispatch for Linux
 =====================
 
-Later revisions of [libdispatch](http://libdispatch.macosforge.org) at Apple's [official SVN repository](http://libdispatch.macosforge.org/trac/browser) don't build on Linux; the last one that works out-of-the-box is `r199`, but that revision doesn't contain any of the nifty APIs added in OS X Lion, e.g. dispatch I/O channels and concurrent private queues.
+[libdispatch](http://libdispatch.macosforge.org), aka Grand Central Dispatch (GCD) is Apple's high-performance event-handling library, introduced in OS X Snow Leopard. It provides a cornucopia of pleasures: asynchronous task queues, monitoring of socket read and write-ability, asynchronous I/O, readers-writer locks, parallel for-loops, sane signal handling, timers, etc etc. Never use pthreads again. 
 
-This repo applies some patches by Mark Heily, taken from [his post to the libdispatch mailing list](http://lists.macosforge.org/pipermail/libdispatch-dev/2012-August/000676.html), along with some other fixes that I've cobbled together.
+Currently, the trunk of the [official SVN repository](http://libdispatch.macosforge.org/trac/browser) doesn't build on Linux; the last revision that works out-of-the-box is `r199`, but that revision doesn't contain any of the nifty APIs added in OS X Lion, e.g. asynchronous I/O. This repo applies some patches by Mark Heily, taken from [his post to the libdispatch mailing list](http://lists.macosforge.org/pipermail/libdispatch-dev/2012-August/000676.html), along with some other fixes that I've cobbled together.
 
-I've also added missing `_f` variants for several functions in `data.h` and `io.h` that took dispatch blocks only; this allows you to make use of Dispatch Data and Dispatch I/O with compilers like GCC that don't support blocks. However, the library itself must still be built with Clang, as libdispatch makes use of blocks internally.
+I've also added missing `_f` variants for several functions in `data.h` and `io.h` that took [Objective-C blocks](http://developer.apple.com/library/ios/#documentation/cocoa/Conceptual/Blocks/Articles/00_Introduction.html) only: look for the functions with `_np` appended to them. Although you can make full use of libdispatch with a compiler like GCC that don't support blocks, libdispatch itself must be built with Clang, as it makes use of blocks internally.
 
+You'll want to read over Apple's [API reference](http://developer.apple.com/library/ios/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html).
+
+Patches are very welcome; I'm not terribly familiar with Linux.
 
 Prerequisities
 --------------
@@ -30,13 +33,12 @@ The following does the job on Ubuntu 12.04:
 
 Testing
 -------
-I've managed to get the test suite building and running on Linux (just run `make check`), but a few tests are failing. As of 17/10/2012, these are the following:
+The included test suite builds and runs on Linux (just run `make check`). Last I checked, a few tests failed:
 
-- dispatch_io
 - dispatch_starfish
 - dispatch_vnode
 
-Assistance here would be appreciated!
+Test failure results are [here](https://gist.github.com/3903724). The dispatch_starfish failure can probably be ignored, but the dispatch_vnode failure seems to indicate some more serious issue, possibly a bug in libkqueue. It might be best to avoid using `dispatch_source_create()` with `DISPATCH_SOURCE_TYPE_VNODE` for now...
 
 Demo
 -------

@@ -418,19 +418,18 @@ test_async_read(char *path, size_t size, int option, dispatch_queue_t queue,
 			break;
 		case DISPATCH_IO_READ_ON_CONCURRENT_QUEUE:
 		case DISPATCH_IO_READ_FROM_PATH_ON_CONCURRENT_QUEUE: {
-			__block bool is_done = false;
+			dispatch_group_t completion_group = dispatch_group_create();
 			__block dispatch_data_t d = dispatch_data_empty;
+
+			dispatch_group_enter(completion_group);
 			void (^cleanup_handler)(int error) = ^(int error) {
 				if (error) {
 					test_errno("dispatch_io_create error", error, 0);
 					test_stop();
 				}
-				if (!is_done) {
-					test_long("dispatch_io_read done", is_done, true);
-				}
+
 				close(fd);
-				process_data(dispatch_data_get_size(d));
-				dispatch_release(d);
+				dispatch_group_leave(completion_group);
 			};
 			dispatch_io_t io = NULL;
 			if (option == DISPATCH_IO_READ_FROM_PATH_ON_CONCURRENT_QUEUE) {
@@ -451,7 +450,8 @@ test_async_read(char *path, size_t size, int option, dispatch_queue_t queue,
 			dispatch_io_set_interval(io, 20 * NSEC_PER_SEC,
 					DISPATCH_IO_STRICT_INTERVAL);
 
-			dispatch_io_read(io, 0, SIZE_MAX, queue,
+			dispatch_group_enter(completion_group);
+			dispatch_io_read(io, 0, size, queue,
 					^(bool done, dispatch_data_t data, int error) {
 				if (!done && !error && !dispatch_data_get_size(data)) {
 					// Timer fired, and no progress from last delivery
@@ -468,9 +468,16 @@ test_async_read(char *path, size_t size, int option, dispatch_queue_t queue,
 						test_stop();
 					}
 				}
-				is_done = done;
+				if (done)
+					dispatch_group_leave(completion_group);
 			});
 			dispatch_release(io);
+
+			dispatch_group_notify(completion_group, queue, ^{
+				process_data(dispatch_data_get_size(d));
+				dispatch_release(d);
+				dispatch_release(completion_group);
+			});		
 			break;
 		}
 	}

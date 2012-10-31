@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012 Nick Hutchinson. All rights reserved.
+ * Copyright (c) 2012 Nick Hutchinson <nshutchinson@gmail.com>.
+ * All rights reserved.
  *
  * @APPLE_APACHE_LICENSE_HEADER_START@
  *
@@ -23,34 +24,34 @@
 void
 _dispatch_data_destructor_free_f(void *context DISPATCH_UNUSED)
 {
-  DISPATCH_CRASH("free destructor called");  
+	DISPATCH_CRASH("free destructor called");  
 }
 
 dispatch_data_t
 dispatch_data_create_f_np(const void *buffer, size_t size, dispatch_queue_t queue,
-    void *destructor_context, dispatch_function_t destructor)
+		void *destructor_context, dispatch_function_t destructor)
 {
-  dispatch_block_t blockDestructor;
+	dispatch_block_t blockDestructor;
 
-  if (destructor == DISPATCH_DATA_DESTRUCTOR_FREE_F) {
-    blockDestructor = DISPATCH_DATA_DESTRUCTOR_FREE;
+	if (destructor == DISPATCH_DATA_DESTRUCTOR_FREE_F) {
+		blockDestructor = DISPATCH_DATA_DESTRUCTOR_FREE;
 	
-  } else if (destructor == DISPATCH_DATA_DESTRUCTOR_DEFAULT) {
-    blockDestructor = DISPATCH_DATA_DESTRUCTOR_DEFAULT;
+	} else if (destructor == DISPATCH_DATA_DESTRUCTOR_DEFAULT) {
+		blockDestructor = DISPATCH_DATA_DESTRUCTOR_DEFAULT;
 
-  } else { 
-    blockDestructor = ^{ destructor(destructor_context); };
-  }
+	} else { 
+		blockDestructor = ^{ destructor(destructor_context); };
+	}
 
-  return dispatch_data_create(buffer, size, queue, blockDestructor);
+	return dispatch_data_create(buffer, size, queue, blockDestructor);
 }
 
 bool
 dispatch_data_apply_f_np(dispatch_data_t data, void *context,
-    dispatch_data_applier_function_t applier)
+		dispatch_data_applier_function_t applier)
 {
-  return dispatch_data_apply(data,
-    ^(dispatch_data_t region, size_t offset, const void *buffer, size_t size) {
-      return applier(region, offset, buffer, size, context);
-    });
+	return dispatch_data_apply(data,
+		^(dispatch_data_t region, size_t offset, const void *buffer, size_t size) {
+			return applier(region, offset, buffer, size, context);
+		});
 }

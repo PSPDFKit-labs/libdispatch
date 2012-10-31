@@ -16,8 +16,8 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
-#ifndef __DISPATCH_TESTS_SHIMS_HW_CONFIG
-#define __DISPATCH_TESTS_SHIMS_HW_CONFIG
+#ifndef __DISPATCH_TESTS_SHIMS_HW_CONFIG__
+#define __DISPATCH_TESTS_SHIMS_HW_CONFIG__
 
 #include <config/config.h>
 
@@ -114,4 +114,4 @@ _dispatch_get_activecpu()
 	return val;
 }
 
-#endif  // __DISPATCH_TESTS_SHIMS_HW_CONFIG
+#endif  /* __DISPATCH_TESTS_SHIMS_HW_CONFIG__ */

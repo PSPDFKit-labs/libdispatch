@@ -62,7 +62,7 @@ get_executable_path(char *buf, uint32_t *bufsize)
 #if __APPLE__
 	return _NSGetExecutablePath(buf, bufsize);
 	
-#elif __linux
+#elif __linux__
 	char path_buf[PATH_MAX];
 	if (!realpath("/proc/self/exe", path_buf)) {
 		return -1;

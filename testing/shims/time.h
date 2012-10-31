@@ -18,8 +18,8 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
-#ifndef __DISPATCH_TESTS_SHIMS_TIME
-#define __DISPATCH_TESTS_SHIMS_TIME
+#ifndef __DISPATCH_TESTS_SHIMS_TIME__
+#define __DISPATCH_TESTS_SHIMS_TIME__
 
 #include <config/config.h>
 
@@ -54,4 +54,4 @@ _dispatch_monotonic_time()
 #endif
 }
 
-#endif  // __DISPATCH_TESTS_SHIMS_TIME
+#endif  /* __DISPATCH_TESTS_SHIMS_TIME__ */

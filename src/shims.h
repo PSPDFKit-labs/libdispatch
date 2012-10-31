@@ -50,13 +50,12 @@ void __builtin_trap(void);
 #endif
 
 #include "shims/atomic.h"
-#include "shims/tsd.h"
-#include "shims/hw_config.h"
-#include "shims/perfmon.h"
-
 #include "shims/getprogname.h"
+#include "shims/hw_config.h"
 #include "shims/malloc_zone.h"
+#include "shims/perfmon.h"
 #include "shims/time.h"
+#include "shims/tsd.h"
 
 #ifdef __APPLE__
 // Clear the stack before calling long-running thread-handler functions that

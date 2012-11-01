@@ -462,7 +462,12 @@ extern struct _dispatch_hw_config_s {
 #define PAGE_SIZE sysconf(_SC_PAGESIZE)
 #endif
 
+#if __APPLE__
 #define _dispatch_set_crash_log_message(x)
+#else
+#define _dispatch_set_crash_log_message(x) \
+		syslog(LOG_USER|LOG_ERR, "[CRASH] %s", x)
+#endif
 
 #if HAVE_MACH
 // MIG_REPLY_MISMATCH means either:

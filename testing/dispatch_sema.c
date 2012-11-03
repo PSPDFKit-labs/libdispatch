@@ -29,14 +29,11 @@
 
 #define LAPS 10000
 
-int
-main(void)
+static void
+test_sem()
 {
 	static size_t total;
 	dispatch_semaphore_t dsema;
-
-	dispatch_test_start("Dispatch Semaphore");
-
 	dsema = dispatch_semaphore_create(1);
 	assert(dsema);
 
@@ -49,6 +46,31 @@ main(void)
 	dispatch_release(dsema);
 
 	test_long("count", total, LAPS);
+}
+
+static void
+test_walltime()
+{
+	dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+	
+	dispatch_time_t timeout = dispatch_walltime(NULL, 2 * NSEC_PER_SEC);
+	uint64_t start = _dispatch_monotonic_time();
+
+	printf("dispatch_semaphore_wait() for 2.0s (walltime)...\n");
+	dispatch_semaphore_wait(sem, timeout);
+
+	test_uint64("Waited for correct time", 
+				(_dispatch_monotonic_time() - start) / NSEC_PER_SEC,
+				2);
+}
+
+int
+main(void)
+{
+	dispatch_test_start("Dispatch Semaphore");
+
+	test_sem();
+	test_walltime();
 	test_stop();
 
 	return 0;

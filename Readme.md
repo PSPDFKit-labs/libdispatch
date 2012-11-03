@@ -1,18 +1,16 @@
 libdispatch for Linux
 =====================
 
-[libdispatch](http://libdispatch.macosforge.org), aka Grand Central Dispatch (GCD) is Apple's high-performance event-handling library, introduced in OS X Snow Leopard. It provides a cornucopia of pleasures: asynchronous task queues, monitoring of socket read and write-ability, asynchronous I/O, readers-writer locks, parallel for-loops, sane signal handling, timers, etc etc. Never use pthreads again. 
+Pthreads getting you down? [libdispatch](http://libdispatch.macosforge.org), aka Grand Central Dispatch (GCD) is Apple's high-performance event-handling library, introduced in OS X Snow Leopard. It provides asynchronous task queues, monitoring of file descriptor read and write-ability, asynchronous I/O (for sockets *and* regular files), readers-writer locks, parallel for-loops, sane signal handling, periodic timers, semaphores and more. You'll want to read over Apple's [API reference](http://developer.apple.com/library/ios/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html).
 
-Currently, the trunk of the [official SVN repository](http://libdispatch.macosforge.org/trac/browser) doesn't build on Linux; the last revision that works out-of-the-box is `r199`, but that revision doesn't contain any of the nifty APIs added in OS X Lion, e.g. asynchronous I/O. This repo applies some patches by Mark Heily, taken from [his post to the libdispatch mailing list](http://lists.macosforge.org/pipermail/libdispatch-dev/2012-August/000676.html), along with some other fixes that I've cobbled together.
-
-You'll want to read over Apple's [API reference](http://developer.apple.com/library/ios/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html).
+Currently, the trunk of the [official SVN repository](http://libdispatch.macosforge.org/trac/browser) doesn't build on Linux; the last revision that builds out-of-the-box is `r199`, but that revision doesn't contain any of the nifty APIs added in OS X Lion, e.g. asynchronous I/O. This repo applies some patches by Mark Heily, taken from [his post to the libdispatch mailing list](http://lists.macosforge.org/pipermail/libdispatch-dev/2012-August/000676.html), along with some other fixes that I've cobbled together. It has not been exhaustively tested, but it seems to work well enough.
 
 Patches are very welcome; I'm not terribly familiar with Linux.
 
 ### Changes from Apple's official version
 I've added the ability to integrate libdispatch's main queue with third-party run-loops, e.g. GLib's `GMainLoop`. Call `dispatch_get_main_queue_eventfd_np()` to get a file descriptor your run-loop can monitor for reading; when it becomes readable, call `eventfd_read(2)` to acknowledge the wakeup, then call `dispatch_main_queue_drain_np()` to execute the pending tasks.
 
-I've also added missing `_f` variants for several functions in `data.h` and `io.h` that took [Objective-C blocks](http://developer.apple.com/library/ios/#documentation/cocoa/Conceptual/Blocks/Articles/00_Introduction.html) only: look for the functions with `_np` appended to them. Although you can make full use of libdispatch with a compiler like GCC that don't support blocks, libdispatch itself must be built with Clang, as it makes use of blocks internally.
+I've also added missing `_f` variants for several functions in `data.h` and `io.h` that took [Objective-C blocks](http://developer.apple.com/library/ios/#documentation/cocoa/Conceptual/Blocks/Articles/00_Introduction.html) only: look for the functions with `_np` appended to them. Although you can make full use of libdispatch with compilers like GCC that don't support blocks, libdispatch itself must be built with Clang, as it makes use of blocks internally.
 
 Prerequisities
 --------------

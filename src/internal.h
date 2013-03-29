@@ -360,7 +360,7 @@ DISPATCH_ALWAYS_INLINE
 static inline void
 _dispatch_client_callout_block(dispatch_block_t b)
 {
-	struct Block_basic *bb = (void*)b;
+	struct Block_basic *bb = (struct Block_basic *)b;
 	return _dispatch_client_callout(b, (dispatch_function_t)bb->Block_invoke);
 }
 

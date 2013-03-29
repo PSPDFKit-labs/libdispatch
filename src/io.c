@@ -65,6 +65,7 @@ static void _dispatch_disk_perform(void *ctxt);
 static void _dispatch_operation_advise(dispatch_operation_t op,
 		size_t chunk_size);
 static int _dispatch_operation_perform(dispatch_operation_t op);
+static int _dispatch_operation_handle_error(dispatch_operation_t op, int err);
 static void _dispatch_operation_deliver_data(dispatch_operation_t op,
 		dispatch_op_flags_t flags);
 
@@ -187,9 +188,9 @@ _dispatch_iocntl(uint32_t param, uint64_t value)
 static dispatch_io_t
 _dispatch_io_create(dispatch_io_type_t type)
 {
-	dispatch_io_t channel = _dispatch_alloc(DISPATCH_VTABLE(io),
+	dispatch_io_t channel = (dispatch_io_t)_dispatch_alloc(DISPATCH_VTABLE(io),
 			sizeof(struct dispatch_io_s));
-	channel->do_next = DISPATCH_OBJECT_LISTLESS;
+	channel->do_next = (dispatch_io_t)DISPATCH_OBJECT_LISTLESS;
 	channel->do_targetq = _dispatch_get_root_queue(0, true);
 	channel->params.type = type;
 	channel->params.high = SIZE_MAX;
@@ -339,7 +340,8 @@ dispatch_io_create_with_path(dispatch_io_type_t type, const char *path,
 		return NULL;
 	}
 	size_t pathlen = strlen(path);
-	dispatch_io_path_data_t path_data = malloc(sizeof(*path_data) + pathlen+1);
+	dispatch_io_path_data_t path_data = (dispatch_io_path_data_t)malloc(
+			sizeof(*path_data) + pathlen+1);
 	if (!path_data) {
 		return NULL;
 	}
@@ -477,7 +479,8 @@ dispatch_io_create_with_io(dispatch_io_type_t type, dispatch_io_t in_channel,
 				dev_t dev = in_channel->fd_entry->stat.dev;
 				size_t path_data_len = sizeof(struct dispatch_io_path_data_s) +
 						in_channel->fd_entry->path_data->pathlen + 1;
-				dispatch_io_path_data_t path_data = malloc(path_data_len);
+				dispatch_io_path_data_t path_data = (dispatch_io_path_data_t)malloc(
+						path_data_len);
 				memcpy(path_data, in_channel->fd_entry->path_data,
 						path_data_len);
 				path_data->channel = channel;
@@ -878,9 +881,9 @@ _dispatch_operation_create(dispatch_op_direction_t direction,
 		});
 		return NULL;
 	}
-	dispatch_operation_t op = _dispatch_alloc(DISPATCH_VTABLE(operation),
-			sizeof(struct dispatch_operation_s));
-	op->do_next = DISPATCH_OBJECT_LISTLESS;
+	dispatch_operation_t op = (dispatch_operation_t)_dispatch_alloc(
+			DISPATCH_VTABLE(operation), sizeof(struct dispatch_operation_s));
+	op->do_next = (dispatch_operation_t)DISPATCH_OBJECT_LISTLESS;
 	op->do_xref_cnt = -1; // operation object is not exposed externally
 	op->op_q = dispatch_queue_create("com.apple.libdispatch-io.opq", NULL);
 	op->op_q->do_targetq = queue;
@@ -1080,7 +1083,8 @@ static dispatch_fd_entry_t
 _dispatch_fd_entry_create(dispatch_queue_t q)
 {
 	dispatch_fd_entry_t fd_entry;
-	fd_entry = calloc(1ul, sizeof(struct dispatch_fd_entry_s));
+	fd_entry = (dispatch_fd_entry_t)
+			calloc(1ul, sizeof(struct dispatch_fd_entry_s));
 	fd_entry->close_queue = dispatch_queue_create(
 			"com.apple.libdispatch-io.closeq", NULL);
 	// Use target queue to ensure that no concurrent lookups are going on when
@@ -1354,7 +1358,7 @@ _dispatch_stream_init(dispatch_fd_entry_t fd_entry, dispatch_queue_t tq)
 	dispatch_op_direction_t direction;
 	for (direction = 0; direction < DOP_DIR_MAX; direction++) {
 		dispatch_stream_t stream;
-		stream = calloc(1ul, sizeof(struct dispatch_stream_s));
+		stream = (dispatch_stream_t)calloc(1ul, sizeof(struct dispatch_stream_s));
 		stream->dq = dispatch_queue_create("com.apple.libdispatch-io.streamq",
 				NULL);
 		_dispatch_retain(tq);
@@ -1393,6 +1397,7 @@ _dispatch_disk_init(dispatch_fd_entry_t fd_entry, dev_t dev)
 	// On devs lock queue
 	dispatch_disk_t disk;
 	char label_name[256];
+	size_t pending_reqs_depth;
 	// Check to see if there is an existing entry for the given device
 	uintptr_t hash = DIO_HASH(dev);
 	TAILQ_FOREACH(disk, &_dispatch_io_devs[hash], disk_list) {
@@ -1402,11 +1407,11 @@ _dispatch_disk_init(dispatch_fd_entry_t fd_entry, dev_t dev)
 		}
 	}
 	// Otherwise create a new entry
-	size_t pending_reqs_depth = dispatch_io_defaults.max_pending_io_reqs;
-	disk = _dispatch_alloc(DISPATCH_VTABLE(disk),
+	pending_reqs_depth = dispatch_io_defaults.max_pending_io_reqs;
+	disk = (dispatch_disk_t)_dispatch_alloc(DISPATCH_VTABLE(disk),
 			sizeof(struct dispatch_disk_s) +
 			(pending_reqs_depth * sizeof(dispatch_operation_t)));
-	disk->do_next = DISPATCH_OBJECT_LISTLESS;
+	disk->do_next = (dispatch_disk_t)DISPATCH_OBJECT_LISTLESS;
 	disk->do_xref_cnt = -1;
 	disk->advise_list_depth = pending_reqs_depth;
 	disk->do_targetq = _dispatch_get_root_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,
@@ -1779,7 +1784,7 @@ _dispatch_disk_handler(void *ctx)
 static void
 _dispatch_disk_perform(void *ctxt)
 {
-	dispatch_disk_t disk = ctxt;
+	dispatch_disk_t disk = (dispatch_disk_t)ctxt;
 	size_t chunk_size = dispatch_io_defaults.chunk_pages * PAGE_SIZE;
 	_dispatch_io_debug("disk perform", -1);
 	dispatch_operation_t op;
@@ -1891,7 +1896,7 @@ _dispatch_operation_perform(dispatch_operation_t op)
 {
 	int err = _dispatch_io_get_error(op, NULL, true);
 	if (err) {
-		goto error;
+		return _dispatch_operation_handle_error(op, err);
 	}
 	if (!op->buf) {
 		size_t max_buf_siz = op->params.high;
@@ -1950,10 +1955,10 @@ _dispatch_operation_perform(dispatch_operation_t op)
 	if (op->fd_entry->fd == -1) {
 		err = _dispatch_fd_entry_open(op->fd_entry, op->channel);
 		if (err) {
-			goto error;
+			return _dispatch_operation_handle_error(op, err);
 		}
 	}
-	void *buf = op->buf + op->buf_len;
+	void *buf = (char *)op->buf + op->buf_len;
 	size_t len = op->buf_siz - op->buf_len;
 	off_t off = op->offset + op->total;
 	ssize_t processed = -1;
@@ -1977,7 +1982,7 @@ syscall:
 		if (err == EINTR) {
 			goto syscall;
 		}
-		goto error;
+		return _dispatch_operation_handle_error(op, err);
 	}
 	// EOF is indicated by two handler invocations
 	if (processed == 0) {
@@ -1993,7 +1998,11 @@ syscall:
 		// Deliver data only if we satisfy the filters
 		return DISPATCH_OP_DELIVER;
 	}
-error:
+}
+
+static int
+_dispatch_operation_handle_error(dispatch_operation_t op, int err)
+{
 	if (err == EAGAIN) {
 		// For disk based files with blocking I/O we should never get EAGAIN
 		dispatch_assert(!op->fd_entry->disk);

@@ -57,7 +57,7 @@ struct dispatch_continuation_s {
 	DISPATCH_CONTINUATION_HEADER(continuation);
 };
 
-typedef struct dispatch_continuation_s *dispatch_continuation_t;
+DISPATCH_DECL(dispatch_continuation);
 
 struct dispatch_apply_s {
 	size_t da_index;
@@ -197,7 +197,7 @@ DISPATCH_ALWAYS_INLINE
 static inline dispatch_queue_t
 _dispatch_queue_get_current(void)
 {
-	return _dispatch_thread_getspecific(dispatch_queue_key);
+	return (dispatch_queue_t)_dispatch_thread_getspecific(dispatch_queue_key);
 }
 
 DISPATCH_ALWAYS_INLINE DISPATCH_CONST
@@ -242,7 +242,7 @@ _dispatch_get_root_queue(long priority, bool overcommit)
 static inline void
 _dispatch_queue_init(dispatch_queue_t dq)
 {
-	dq->do_next = DISPATCH_OBJECT_LISTLESS;
+	dq->do_next = (struct dispatch_queue_s *)DISPATCH_OBJECT_LISTLESS;
 	// Default target queue is overcommit!
 	dq->do_targetq = _dispatch_get_root_queue(0, true);
 	dq->dq_running = 0;
@@ -258,7 +258,8 @@ static inline dispatch_continuation_t
 _dispatch_continuation_alloc_cacheonly(void)
 {
 	dispatch_continuation_t dc;
-	dc = fastpath(_dispatch_thread_getspecific(dispatch_cache_key));
+	dc = fastpath((dispatch_continuation_t)
+	              _dispatch_thread_getspecific(dispatch_cache_key));
 	if (dc) {
 		_dispatch_thread_setspecific(dispatch_cache_key, dc->do_next);
 	}
@@ -284,7 +285,8 @@ static inline void
 _dispatch_continuation_free(dispatch_continuation_t dc)
 {
 	dispatch_continuation_t prev_dc;
-	prev_dc = _dispatch_thread_getspecific(dispatch_cache_key);
+	prev_dc = (dispatch_continuation_t)
+			_dispatch_thread_getspecific(dispatch_cache_key);
 	dc->do_next = prev_dc;
 	_dispatch_thread_setspecific(dispatch_cache_key, dc);
 }

@@ -91,7 +91,7 @@ typedef OS_OBJECT_CLASS(object) *_os_object_t;
 		<OS_OBJECT_CLASS(name)> \
 		@end
 #else
-typedef struct _os_object_s *_os_object_t;
+DISPATCH_DECL(_os_object);
 #endif
 
 __BEGIN_DECLS

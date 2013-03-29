@@ -36,7 +36,7 @@ static inline malloc_zone_t *
 malloc_create_zone(size_t start_size, unsigned flags)
 {
 
-	return ((void *)(-1));
+	return ((malloc_zone_t *)(-1));
 }
 
 static inline void
@@ -49,14 +49,14 @@ static inline malloc_zone_t *
 malloc_default_zone(void)
 {
 
-	return ((void *)(-1));
+	return ((malloc_zone_t *)(-1));
 }
 
 static inline malloc_zone_t *
 malloc_zone_from_ptr(const void *ptr)
 {
 
-	return ((void *)(-1));
+	return ((malloc_zone_t *)(-1));
 }
 
 static inline void *

@@ -105,10 +105,14 @@ struct dispatch_stat_s {
 };
 
 DISPATCH_CLASS_DECL(disk);
+
+typedef TAILQ_HEAD(dispatch_disk_operations_s, dispatch_operation_s) 
+	dispatch_disk_operations_t;
+	
 struct dispatch_disk_s {
 	DISPATCH_STRUCT_HEADER(disk);
 	dev_t dev;
-	TAILQ_HEAD(dispatch_disk_operations_s, dispatch_operation_s) operations;
+	dispatch_disk_operations_t operations;
 	dispatch_operation_t cur_rq;
 	dispatch_queue_t pick_queue;
 

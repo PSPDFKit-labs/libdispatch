@@ -54,8 +54,8 @@
 #else
 #define DISPATCH_VTABLE_SUBCLASS_INSTANCE(name, super, ...) \
 		const struct dispatch_##super##_vtable_s _dispatch_##name##_vtable = { \
-			._os_obj_xref_dispose = _dispatch_xref_dispose, \
-			._os_obj_dispose = _dispatch_dispose, \
+			._os_obj_xref_dispose = (void (*)(struct _os_object_s*))_dispatch_xref_dispose, \
+			._os_obj_dispose = (void (*)(struct _os_object_s*))_dispatch_dispose, \
 			__VA_ARGS__ \
 		}
 #endif // USE_OBJC

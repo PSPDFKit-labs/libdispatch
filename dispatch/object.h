@@ -57,19 +57,50 @@ _dispatch_object_validate(dispatch_object_t object) {
 	(void)isa;
 }
 #elif defined(__cplusplus)
-/*
- * Dispatch objects are NOT C++ objects. Nevertheless, we can at least keep C++
- * aware of type compatibility.
- */
-typedef struct dispatch_object_s {
-private:
-	dispatch_object_s();
-	~dispatch_object_s();
-	dispatch_object_s(const dispatch_object_s &);
-	void operator=(const dispatch_object_s &);
-} *dispatch_object_t;
+/* In C++, we emulate C's transparent_union attribute. */
+
+struct dispatch_object_s;
+
+namespace dispatch {
+struct true_type { static const bool value = true; };
+struct false_type { static const bool value = false; };
+
+template <bool, typename = void> struct enable_if {};
+template <typename T> struct enable_if<true, T> { typedef T type; };
+
+template <typename> struct is_dispatch_object : false_type {};
+template <> struct is_dispatch_object<dispatch_object_s> : true_type {}; 
+};
+
+union dispatch_object_t {
+	template <typename T>
+	dispatch_object_t(T* obj,
+		typename dispatch::enable_if<dispatch::is_dispatch_object<T>::value
+			>::type* = 0)
+		: _do(reinterpret_cast<struct dispatch_object_s*>(obj)) {}
+
+	dispatch_object_t() {}	// = default
+
+	struct _os_object_s *_os_obj;
+	struct dispatch_object_s *_do;
+	struct dispatch_continuation_s *_dc;
+	struct dispatch_queue_s *_dq;
+	struct dispatch_queue_attr_s *_dqa;
+	struct dispatch_group_s *_dg;
+	struct dispatch_source_s *_ds;
+	struct dispatch_source_attr_s *_dsa;
+	struct dispatch_semaphore_s *_dsema;
+	struct dispatch_data_s *_ddata;
+	struct dispatch_io_s *_dchannel;
+	struct dispatch_operation_s *_doperation;
+	struct dispatch_disk_s *_ddisk;
+};
+
 #define DISPATCH_DECL(name) \
-		typedef struct name##_s : public dispatch_object_s {} *name##_t
+	typedef struct name##_s *name##_t;  \
+	namespace dispatch { \
+		template <> struct is_dispatch_object<name##_s> : true_type {}; \
+	}
 #define DISPATCH_GLOBAL_OBJECT(type, object) (&(object))
 #define DISPATCH_RETURNS_RETAINED
 #else /* Plain C */

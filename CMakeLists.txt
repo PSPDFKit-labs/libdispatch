@@ -5,6 +5,7 @@ set (dispatch_VERSION "1.2")
 
 list (APPEND CMAKE_MODULE_PATH "${dispatch_SOURCE_DIR}/cmake")
 
+include (CTest)
 include (CMakePushCheckState)
 include (CheckCSourceCompiles)
 include (CheckCCompilerFlag)
@@ -22,7 +23,7 @@ endif ()
 
 ################################################################################
 # Darwin-specific stuff
-#
+# 
 # On Mac OS X, some required header files come from other source packages;
 # allow specifying where those are.
 #
@@ -264,4 +265,7 @@ configure_file("config/config.h.cmake.in"
 ################################################################################
 
 add_subdirectory(src)
-add_subdirectory(testing)
+
+if (HAVE_BLOCKS)
+  add_subdirectory(testing)
+endif ()

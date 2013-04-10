@@ -18,7 +18,7 @@
  * @APPLE_APACHE_LICENSE_HEADER_END@
  */
 
-#include "config.h"
+#include <config/config.h>
 
 #include <dispatch/dispatch.h>
 #include <assert.h>

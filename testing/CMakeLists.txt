@@ -1,4 +1,9 @@
-set (bsdtests_sources
+# INCLUDE(CTest)
+# enable_testing ()
+
+set_property(DIRECTORY PROPERTY EXCLUDE_FROM_ALL 1)
+
+add_library(bsdtests OBJECT
   bsdtests.c
   bsdtests.h
   dispatch_test.c
@@ -12,13 +17,7 @@ set (bsdtests_sources
   shims/fgetln.h
 )
 
-set (check_PROGRAMS
-  bsdtestharness
-  bsdtestsummarize
-  ${TESTS}
-)
-
-set (TESTS
+set (dispatch_tests
   dispatch_apply
   dispatch_api
   dispatch_c99
@@ -57,55 +56,138 @@ set (TESTS
 )
 
 if (HAVE_MACH)
-  list (APPEND TESTS dispatch_deadname)
+  list (APPEND dispatch_tests dispatch_deadname)
 endif ()
 
-set (dispatch_c99_CFLAGS ${AM_CFLAGS} -set(std c99))
-set (dispatch_plusplus_SOURCES dispatch_plusplus.cpp)
+set (dispatch_tests_CFLAGS   
+  -Wall
+  -Wextra
+  -Wno-unused-parameter
+  ${CBLOCKS_FLAGS}
+)
+
+# Sometimes we need to link additional libraries for maths functions
+DSSearchLibs(sin LIBRARIES m REQUIRED)
+set (MATH_LIBRARIES "${SIN_LIBRARIES}")
+
+set (dispatch_tests_LIBRARIES
+  libdispatch_shared
+  ${MATH_LIBRARIES}
+)
+
 set (dispatch_priority2_SOURCES dispatch_priority.c)
-set (dispatch_priority2_CPPFLAGS ${AM_CPPFLAGS} -set(DUSE_SET_TARGET_QUEUE 1))
+set (dispatch_priority2_DEFINITIONS USE_SET_TARGET_QUEUE=1)
 
-set (AM_CPPFLAGS -I${dispatch_BINARY_DIR} -I${dispatch_SOURCE_DIR})
+include_directories(
+  ${dispatch_BINARY_DIR}
+  ${dispatch_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+)
 
-set (AM_CFLAGS -Wall ${MARCH_FLAGS} ${CBLOCKS_FLAGS} ${KQUEUE_CFLAGS})
-set (AM_OBJCFLAGS -Wall ${MARCH_FLAGS} ${CBLOCKS_FLAGS} -fobjc-gc)
-set (AM_CXXFLAGS -Wall ${MARCH_FLAGS} ${CXXBLOCKS_FLAGS})
+# Give the test suite access to dispatch's private headers
+execute_process(COMMAND ${CMAKE_COMMAND} -E 
+  create_symlink "${dispatch_SOURCE_DIR}/private" "dispatch"
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
 
-set (LDADD libbsdtests.la ../src/libdispatch.la)
-set (libbsdtests_la_LDFLAGS -avoid-version)
-
-set (TESTS_ENVIRONMENT ./bsdtestharness)
-set (DISTCLEAN bench.cc)
+include_directories(
+  "${KQUEUE_INCLUDE_DIRS}"
+  "${PTHREAD_WORKQUEUE_INCLUDE_DIRS}"
+  "${BLOCKS_RUNTIME_INCLUDE_DIRS}"
+)
 
 if (HAVE_COREFOUNDATION)
-  list (APPEND TESTS
+  include_directories(${COREFOUNDATION_INCLUDE_DIRS})
+
+  list (APPEND dispatch_tests
     dispatch_cf_main
     dispatch_transform
     dispatch_sync_on_main
     cffd
   )
 
-  set(dispatch_cf_main_LDFLAGS -framework CoreFoundation)
-  set(dispatch_transform_LDFLAGS -framework CoreFoundation -framework Security)
-  set(dispatch_sync_on_main_LDFLAGS -framework CoreFoundation)
-  set(cffd_LDFLAGS -framework CoreFoundation)
+  find_library(SECURITY_LIBRARIES Security)
+
+  set (dispatch_cf_main_LIBRARIES ${COREFOUNDATION_LIBRARIES})
+  set (dispatch_transform_LIBRARIES ${COREFOUNDATION_LIBRARIES} ${SECURITY_LIBRARIES})
+  set (dispatch_sync_on_main_LIBRARIES ${COREFOUNDATION_LIBRARIES})
+  set (cffd_LIBRARIES ${COREFOUNDATION_LIBRARIES})
 endif ()
 
 if (HAVE_FOUNDATION)
-  list (APPEND TESTS
+  include_directories(${FOUNDATION_INCLUDE_DIRS})
+
+# XXX
+# set (AM_OBJCFLAGS -Wall ${CBLOCKS_FLAGS} -fobjc-gc)
+
+  list (APPEND dispatch_tests
     dispatch_sync_gc
     dispatch_apply_gc
     nsoperation
     bench
   )
 
-  set(dispatch_sync_gc_SOURCES dispatch_sync_gc.m)
-  set(dispatch_sync_gc_LDFLAGS -framework Foundation)
-  set(dispatch_apply_gc_SOURCES dispatch_apply_gc.m)
-  set(dispatch_apply_gc_LDFLAGS -framework Foundation)
-  set(nsoperation_SOURCES nsoperation.m)
-  set(nsoperation_LDFLAGS -framework Foundation)
-  set(nodist_bench_SOURCES bench.cc)
-  set(bench_SOURCES func.c)
-  set(bench_LDFLAGS -framework Foundation)
+  set (dispatch_sync_gc_LIBRARIES ${FOUNDATION_LIBRARIES})
+  set (dispatch_apply_gc_LIBRARIES ${FOUNDATION_LIBRARIES})
+  set (nsoperation_LIBRARIES ${FOUNDATION_LIBRARIES})
+  set (bench_SOURCES func.c)
+  set (bench_LIBRARIES ${FOUNDATION_LIBRARIES})
 endif ()
+
+
+
+# Add the tests
+
+foreach (test IN LISTS dispatch_tests)
+  set (test_source "${test}")
+  if (DEFINED ${test}_SOURCES)
+    set (test_source "${${test}_SOURCES}")
+  endif ()
+
+  add_executable("${test}" "${test_source}" "$<TARGET_OBJECTS:bsdtests>")
+
+  if (DEFINED ${test}_DEFINITIONS)
+    set_property(TARGET ${test} APPEND PROPERTY
+      COMPILE_DEFINITIONS ${${test}_DEFINITIONS})
+  endif ()
+
+  if (DEFINED ${test}_LIBRARIES)
+    target_link_libraries("${test}"
+      COMPILE_DEFINITIONS ${${test}_LIBRARIES})
+  endif ()
+
+  DSTargetAppendCompilerFlags(TARGET "${test}" FLAGS
+    ${dispatch_tests_CFLAGS}
+  )
+
+  target_link_libraries("${test}" ${dispatch_tests_LIBRARIES})
+
+
+  get_property(test_exe_path TARGET ${test} PROPERTY LOCATION)
+
+  add_test(NAME "${test}" COMMAND bsdtestharness ${test_exe_path})
+endforeach ()
+
+
+add_executable(bsdtestharness 
+  bsdtestharness.c
+  "$<TARGET_OBJECTS:bsdtests>"
+)
+add_executable(bsdtestsummarize
+  bsdtestsummarize.c
+  "$<TARGET_OBJECTS:bsdtests>"
+)
+
+target_link_libraries(bsdtestharness ${dispatch_tests_LIBRARIES})
+target_link_libraries(bsdtestsummarize ${dispatch_tests_LIBRARIES})
+
+DSTargetAppendCompilerFlags(TARGET bsdtestharness bsdtestsummarize FLAGS
+  ${dispatch_tests_CFLAGS}
+)
+
+add_custom_target(check
+  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure 
+  DEPENDS bsdtestharness ${dispatch_tests}
+  VERBATIM
+)

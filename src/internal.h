@@ -47,6 +47,13 @@
 #include "shims/strlcpy.h"
 #endif
 
+// FIXME
+#ifdef __BLOCKS__
+#define WITH_DISPATCH_IO 1
+#else 
+#define WITH_DISPATCH_IO 0
+#endif
+
 #if USE_OBJC && ((!TARGET_IPHONE_SIMULATOR && defined(__i386__)) || \
 		(!TARGET_OS_IPHONE && __MAC_OS_X_VERSION_MIN_REQUIRED < 1080))
 // Disable Objective-C support on platforms with legacy objc runtime
@@ -502,8 +509,12 @@ extern struct _dispatch_hw_config_s {
 #include "semaphore_internal.h"
 #include "queue_internal.h"
 #include "source_internal.h"
-#include "data_internal.h"
+
+#if WITH_DISPATCH_IO
 #include "io_internal.h"
+#include "data_internal.h"
+#endif
+
 #include "trace.h"
 
 #endif /* __DISPATCH_INTERNAL__ */

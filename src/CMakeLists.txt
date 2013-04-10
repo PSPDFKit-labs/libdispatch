@@ -60,6 +60,10 @@ set (cflags
   ${CBLOCKS_FLAGS}
 )
 
+if (CMAKE_C_COMPILER_ID MATCHES "GNU")
+  list(APPEND cflags -Wno-unknown-pragmas)
+endif ()
+
 if (HAVE_DARWIN_LD)
   list (APPEND linker_flags 
     "-Wl,-compatibility_version,1"

@@ -1465,7 +1465,7 @@ _dispatch_barrier_sync_f_pop(dispatch_queue_t dq, dispatch_object_t dou,
 #if HAVE_MACH
         MACH_PORT_DEAD;
 #else
-        (~0);   /* The same value as MACH_PORT_DEAD */
+        (~0u);   /* The same value as MACH_PORT_DEAD */
 #endif
 }
 

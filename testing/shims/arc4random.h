@@ -20,7 +20,7 @@
 #ifndef __DISPATCH_TESTS_SHIMS_ARC4RANDOM__
 #define __DISPATCH_TESTS_SHIMS_ARC4RANDOM__
 
-#ifndef HAVE_ARC4RANDOM
+#if !HAVE_ARC4RANDOM
 unsigned int arc4random();
 #endif
 

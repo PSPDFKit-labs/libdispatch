@@ -43,7 +43,7 @@
 #include "shims/queue.h"
 #endif
 
-#ifndef HAVE_STRLCPY
+#if !HAVE_STRLCPY
 #include "shims/strlcpy.h"
 #endif
 

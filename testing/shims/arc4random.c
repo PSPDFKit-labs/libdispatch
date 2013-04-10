@@ -30,7 +30,7 @@
 
 #include "config/config.h"
 
-#ifndef HAVE_ARC4RANDOM
+#if !HAVE_ARC4RANDOM
 
 #include <sys/types.h>
 #include <sys/time.h>

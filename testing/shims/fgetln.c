@@ -37,7 +37,7 @@
 
 #include "config/config.h"
 
-#ifndef HAVE_FGETLN
+#if !HAVE_FGETLN
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,6 +89,6 @@ fgetln(fp, len)
 	return buf;
 }
 
-#endif /* #ifndef HAVE_FGETLN */
+#endif /* #if !HAVE_FGETLN */
 
 

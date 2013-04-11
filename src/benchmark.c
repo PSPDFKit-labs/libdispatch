@@ -86,7 +86,12 @@ dispatch_benchmark_f(size_t count, register void *ctxt,
 		register void (*func)(void *))
 {
 	static struct __dispatch_benchmark_data_s bdata = {
+#if HAVE_MACH_ABSOLUTE_TIME
+		.tbi 	 = {0, 0},
+#endif
+		.loop_cost = 0,
 		.func = (dispatch_function_t)dummy_function,
+		.ctxt  = NULL, 
 		.count = 10000000ul, // ten million
 	};
 	static dispatch_once_t pred;

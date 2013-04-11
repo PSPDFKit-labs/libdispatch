@@ -204,8 +204,11 @@ void
 dispatch_source_merge_data(dispatch_source_t ds, unsigned long val)
 {
 	struct kevent kev = {
+		.ident = 0,
+		.filter = 0,
+		.flags = 0,
 		.fflags = (typeof(kev.fflags))val,
-		.data = val,
+		.data = (intptr_t)val,
 	};
 
 	dispatch_assert(
@@ -689,19 +692,28 @@ _dispatch_source_drain_kevent(struct kevent *ke)
 #pragma mark dispatch_kevent_t
 
 static struct dispatch_kevent_s _dispatch_kevent_data_or = {
+	.dk_list = {0},
+	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_or.dk_sources),
 	.dk_kevent = {
+		.ident = 0,
 		.filter = DISPATCH_EVFILT_CUSTOM_OR,
 		.flags = EV_CLEAR,
+		.fflags = 0,
+		.data = 0,
 		.udata = &_dispatch_kevent_data_or,
 	},
-	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_or.dk_sources),
 };
 static struct dispatch_kevent_s _dispatch_kevent_data_add = {
+	.dk_list = {0},
+	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_add.dk_sources),
 	.dk_kevent = {
+		.ident = 0,
 		.filter = DISPATCH_EVFILT_CUSTOM_ADD,
+		.flags = 0,
+		.fflags = 0,
+		.data = 0,
 		.udata = &_dispatch_kevent_data_add,
 	},
-	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_add.dk_sources),
 };
 
 #if TARGET_OS_EMBEDDED
@@ -915,31 +927,43 @@ _dispatch_kevent_unregister(dispatch_source_t ds)
 DISPATCH_CACHELINE_ALIGN
 static struct dispatch_kevent_s _dispatch_kevent_timer[] = {
 	[DISPATCH_TIMER_INDEX_WALL] = {
+		.dk_list = {0},
+		.dk_sources = TAILQ_HEAD_INITIALIZER(
+				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_WALL].dk_sources),
 		.dk_kevent = {
 			.ident = DISPATCH_TIMER_INDEX_WALL,
 			.filter = DISPATCH_EVFILT_TIMER,
+			.flags = 0,
+			.fflags = 0,
+			.data = 0,
 			.udata = &_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_WALL],
 		},
-		.dk_sources = TAILQ_HEAD_INITIALIZER(
-				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_WALL].dk_sources),
 	},
 	[DISPATCH_TIMER_INDEX_MACH] = {
+		.dk_list = {0},
+		.dk_sources = TAILQ_HEAD_INITIALIZER(
+				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_MACH].dk_sources),
 		.dk_kevent = {
 			.ident = DISPATCH_TIMER_INDEX_MACH,
 			.filter = DISPATCH_EVFILT_TIMER,
+			.flags = 0,
+			.fflags = 0,
+			.data = 0,
 			.udata = &_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_MACH],
 		},
-		.dk_sources = TAILQ_HEAD_INITIALIZER(
-				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_MACH].dk_sources),
 	},
 	[DISPATCH_TIMER_INDEX_DISARM] = {
+		.dk_list = {0},
+		.dk_sources = TAILQ_HEAD_INITIALIZER(
+				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_DISARM].dk_sources),
 		.dk_kevent = {
 			.ident = DISPATCH_TIMER_INDEX_DISARM,
 			.filter = DISPATCH_EVFILT_TIMER,
+			.flags = 0,
+			.fflags = 0,
+			.data = 0,
 			.udata = &_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_DISARM],
 		},
-		.dk_sources = TAILQ_HEAD_INITIALIZER(
-				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_DISARM].dk_sources),
 	},
 };
 // Don't count disarmed timer list

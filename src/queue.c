@@ -148,6 +148,7 @@ struct dispatch_root_queue_context_s {
 DISPATCH_CACHELINE_ALIGN
 static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	[DISPATCH_ROOT_QUEUE_IDX_LOW_PRIORITY] = {{{
+		.dgq_pending = 0,
 #if HAVE_PTHREAD_WORKQUEUES
 		.dgq_wq_priority = WORKQ_LOW_PRIOQUEUE,
 		.dgq_wq_options = 0,
@@ -159,6 +160,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 #endif
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_LOW_OVERCOMMIT_PRIORITY] = {{{
+		.dgq_pending = 0,
 #if HAVE_PTHREAD_WORKQUEUES
 		.dgq_wq_priority = WORKQ_LOW_PRIOQUEUE,
 		.dgq_wq_options = WORKQ_ADDTHREADS_OPTION_OVERCOMMIT,
@@ -170,6 +172,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 #endif
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_DEFAULT_PRIORITY] = {{{
+		.dgq_pending = 0,
 #if HAVE_PTHREAD_WORKQUEUES
 		.dgq_wq_priority = WORKQ_DEFAULT_PRIOQUEUE,
 		.dgq_wq_options = 0,
@@ -181,6 +184,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 #endif
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_DEFAULT_OVERCOMMIT_PRIORITY] = {{{
+		.dgq_pending = 0,
 #if HAVE_PTHREAD_WORKQUEUES
 		.dgq_wq_priority = WORKQ_DEFAULT_PRIOQUEUE,
 		.dgq_wq_options = WORKQ_ADDTHREADS_OPTION_OVERCOMMIT,
@@ -192,6 +196,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 #endif
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_HIGH_PRIORITY] = {{{
+		.dgq_pending = 0,
 #if HAVE_PTHREAD_WORKQUEUES
 		.dgq_wq_priority = WORKQ_HIGH_PRIOQUEUE,
 		.dgq_wq_options = 0,
@@ -203,6 +208,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 #endif
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_HIGH_OVERCOMMIT_PRIORITY] = {{{
+		.dgq_pending = 0,
 #if HAVE_PTHREAD_WORKQUEUES
 		.dgq_wq_priority = WORKQ_HIGH_PRIOQUEUE,
 		.dgq_wq_options = WORKQ_ADDTHREADS_OPTION_OVERCOMMIT,
@@ -214,6 +220,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 #endif
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_PRIORITY] = {{{
+		.dgq_pending = 0,
 #if HAVE_PTHREAD_WORKQUEUES
 		.dgq_wq_priority = WORKQ_BG_PRIOQUEUE,
 		.dgq_wq_options = 0,
@@ -225,6 +232,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 #endif
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_OVERCOMMIT_PRIORITY] = {{{
+		.dgq_pending = 0,
 #if HAVE_PTHREAD_WORKQUEUES
 		.dgq_wq_priority = WORKQ_BG_PRIOQUEUE,
 		.dgq_wq_options = WORKQ_ADDTHREADS_OPTION_OVERCOMMIT,
@@ -246,122 +254,186 @@ struct dispatch_queue_s _dispatch_root_queues[] = {
 		.do_vtable = DISPATCH_VTABLE(queue_root),
 		.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 		.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+		.do_next = NULL,
+		.do_targetq = NULL,
 		.do_ctxt = &_dispatch_root_queue_contexts[
 				DISPATCH_ROOT_QUEUE_IDX_LOW_PRIORITY],
-		.dq_label = "com.apple.root.low-priority",
+		.do_finalizer = NULL,
+		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
 		.dq_running = 2,
 		.dq_width = UINT32_MAX,
+		.dq_items_tail = NULL,
+		.dq_items_head = NULL,
 		.dq_serialnum = 4,
+		.dq_specific_q = NULL,
+		// "com.apple.root.low-priority"
+		.dq_label = {'c', 'o', 'm', '.', 'a', 'p', 'p', 'l', 'e', '.', 'r', 'o', 'o', 't', '.', 'l', 'o', 'w', '-', 'p', 'r', 'i', 'o', 'r', 'i', 't', 'y', '\0'},
 	},
 	[DISPATCH_ROOT_QUEUE_IDX_LOW_OVERCOMMIT_PRIORITY] = {
 		.do_vtable = DISPATCH_VTABLE(queue_root),
 		.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 		.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+		.do_next = NULL,
+		.do_targetq = NULL,
 		.do_ctxt = &_dispatch_root_queue_contexts[
 				DISPATCH_ROOT_QUEUE_IDX_LOW_OVERCOMMIT_PRIORITY],
-		.dq_label = "com.apple.root.low-overcommit-priority",
+		.do_finalizer = NULL,
+		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
 		.dq_running = 2,
 		.dq_width = UINT32_MAX,
+		.dq_items_tail = NULL,
+		.dq_items_head = NULL,
 		.dq_serialnum = 5,
+		.dq_specific_q = NULL,
+		// "com.apple.root.low-overcommit-priority"
+		.dq_label = {'c', 'o', 'm', '.', 'a', 'p', 'p', 'l', 'e', '.', 'r', 'o', 'o', 't', '.', 'l', 'o', 'w', '-', 'o', 'v', 'e', 'r', 'c', 'o', 'm', 'm', 'i', 't', '-', 'p', 'r', 'i', 'o', 'r', 'i', 't', 'y', '\0'},
 	},
 	[DISPATCH_ROOT_QUEUE_IDX_DEFAULT_PRIORITY] = {
 		.do_vtable = DISPATCH_VTABLE(queue_root),
 		.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 		.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+		.do_next = NULL,
+		.do_targetq = NULL,
 		.do_ctxt = &_dispatch_root_queue_contexts[
 				DISPATCH_ROOT_QUEUE_IDX_DEFAULT_PRIORITY],
-		.dq_label = "com.apple.root.default-priority",
+		.do_finalizer = NULL,
+		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
 		.dq_running = 2,
 		.dq_width = UINT32_MAX,
+		.dq_items_tail = NULL,
+		.dq_items_head = NULL,
 		.dq_serialnum = 6,
+		.dq_specific_q = NULL,
+		// "com.apple.root.default-priority"
+		.dq_label = {'c', 'o', 'm', '.', 'a', 'p', 'p', 'l', 'e', '.', 'r', 'o', 'o', 't', '.', 'd', 'e', 'f', 'a', 'u', 'l', 't', '-', 'p', 'r', 'i', 'o', 'r', 'i', 't', 'y', '\0'},
 	},
 	[DISPATCH_ROOT_QUEUE_IDX_DEFAULT_OVERCOMMIT_PRIORITY] = {
 		.do_vtable = DISPATCH_VTABLE(queue_root),
 		.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 		.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+		.do_next = NULL,
+		.do_targetq = NULL,
 		.do_ctxt = &_dispatch_root_queue_contexts[
 				DISPATCH_ROOT_QUEUE_IDX_DEFAULT_OVERCOMMIT_PRIORITY],
-		.dq_label = "com.apple.root.default-overcommit-priority",
+		.do_finalizer = NULL,
+		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
 		.dq_running = 2,
 		.dq_width = UINT32_MAX,
+		.dq_items_tail = NULL,
+		.dq_items_head = NULL,
 		.dq_serialnum = 7,
+		.dq_specific_q = NULL,
+		// "com.apple.root.default-overcommit-priority"
+		.dq_label = {'c', 'o', 'm', '.', 'a', 'p', 'p', 'l', 'e', '.', 'r', 'o', 'o', 't', '.', 'd', 'e', 'f', 'a', 'u', 'l', 't', '-', 'o', 'v', 'e', 'r', 'c', 'o', 'm', 'm', 'i', 't', '-', 'p', 'r', 'i', 'o', 'r', 'i', 't', 'y', '\0'},
 	},
 	[DISPATCH_ROOT_QUEUE_IDX_HIGH_PRIORITY] = {
 		.do_vtable = DISPATCH_VTABLE(queue_root),
 		.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 		.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+		.do_next = NULL,
+		.do_targetq = NULL,
 		.do_ctxt = &_dispatch_root_queue_contexts[
 				DISPATCH_ROOT_QUEUE_IDX_HIGH_PRIORITY],
-		.dq_label = "com.apple.root.high-priority",
+		.do_finalizer = NULL,
+		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
 		.dq_running = 2,
 		.dq_width = UINT32_MAX,
+		.dq_items_tail = NULL,
+		.dq_items_head = NULL,
 		.dq_serialnum = 8,
+		.dq_specific_q = NULL,
+		// "com.apple.root.high-priority"
+		.dq_label = {'c', 'o', 'm', '.', 'a', 'p', 'p', 'l', 'e', '.', 'r', 'o', 'o', 't', '.', 'h', 'i', 'g', 'h', '-', 'p', 'r', 'i', 'o', 'r', 'i', 't', 'y', '\0'},
 	},
 	[DISPATCH_ROOT_QUEUE_IDX_HIGH_OVERCOMMIT_PRIORITY] = {
 		.do_vtable = DISPATCH_VTABLE(queue_root),
 		.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 		.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+		.do_next = NULL,
+		.do_targetq = NULL,
 		.do_ctxt = &_dispatch_root_queue_contexts[
 				DISPATCH_ROOT_QUEUE_IDX_HIGH_OVERCOMMIT_PRIORITY],
-		.dq_label = "com.apple.root.high-overcommit-priority",
+		.do_finalizer = NULL,
+		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
 		.dq_running = 2,
 		.dq_width = UINT32_MAX,
+		.dq_items_tail = NULL,
+		.dq_items_head = NULL,
 		.dq_serialnum = 9,
+		.dq_specific_q = NULL,
+		// "com.apple.root.high-overcommit-priority"
+		.dq_label = {'c', 'o', 'm', '.', 'a', 'p', 'p', 'l', 'e', '.', 'r', 'o', 'o', 't', '.', 'h', 'i', 'g', 'h', '-', 'o', 'v', 'e', 'r', 'c', 'o', 'm', 'm', 'i', 't', '-', 'p', 'r', 'i', 'o', 'r', 'i', 't', 'y', '\0'},
 	},
 	[DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_PRIORITY] = {
 		.do_vtable = DISPATCH_VTABLE(queue_root),
 		.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 		.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+		.do_next = NULL,
+		.do_targetq = NULL,
 		.do_ctxt = &_dispatch_root_queue_contexts[
 				DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_PRIORITY],
-		.dq_label = "com.apple.root.background-priority",
+		.do_finalizer = NULL,
+		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
 		.dq_running = 2,
 		.dq_width = UINT32_MAX,
+		.dq_items_tail = NULL,
+		.dq_items_head = NULL,
 		.dq_serialnum = 10,
+		.dq_specific_q = NULL,
+		// "com.apple.root.background-priority"
+		.dq_label = {'c', 'o', 'm', '.', 'a', 'p', 'p', 'l', 'e', '.', 'r', 'o', 'o', 't', '.', 'b', 'a', 'c', 'k', 'g', 'r', 'o', 'u', 'n', 'd', '-', 'p', 'r', 'i', 'o', 'r', 'i', 't', 'y', '\0'},
 	},
 	[DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_OVERCOMMIT_PRIORITY] = {
 		.do_vtable = DISPATCH_VTABLE(queue_root),
 		.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 		.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+		.do_next = NULL,
+		.do_targetq = NULL,
 		.do_ctxt = &_dispatch_root_queue_contexts[
 				DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_OVERCOMMIT_PRIORITY],
-		.dq_label = "com.apple.root.background-overcommit-priority",
+		.do_finalizer = NULL,
+		.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
 		.dq_running = 2,
 		.dq_width = UINT32_MAX,
+		.dq_items_tail = NULL,
+		.dq_items_head = NULL,
 		.dq_serialnum = 11,
+		.dq_specific_q = NULL,
+		// "com.apple.root.background-overcommit-priority"
+		.dq_label = {'c', 'o', 'm', '.', 'a', 'p', 'p', 'l', 'e', '.', 'r', 'o', 'o', 't', '.', 'b', 'a', 'c', 'k', 'g', 'r', 'o', 'u', 'n', 'd', '-', 'o', 'v', 'e', 'r', 'c', 'o', 'm', 'm', 'i', 't', '-', 'p', 'r', 'i', 'o', 'r', 'i', 't', 'y', '\0'},
 	},
 };
 
 #if HAVE_PTHREAD_WORKQUEUES
 static const dispatch_queue_t _dispatch_wq2root_queues[][2] = {
-	[WORKQ_LOW_PRIOQUEUE][0] = &_dispatch_root_queues[
-			DISPATCH_ROOT_QUEUE_IDX_LOW_PRIORITY],
-	[WORKQ_LOW_PRIOQUEUE][WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
-			&_dispatch_root_queues[
-			DISPATCH_ROOT_QUEUE_IDX_LOW_OVERCOMMIT_PRIORITY],
-	[WORKQ_DEFAULT_PRIOQUEUE][0] = &_dispatch_root_queues[
-			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_PRIORITY],
-	[WORKQ_DEFAULT_PRIOQUEUE][WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
-			&_dispatch_root_queues[
-			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_OVERCOMMIT_PRIORITY],
-	[WORKQ_HIGH_PRIOQUEUE][0] = &_dispatch_root_queues[
+	[WORKQ_HIGH_PRIOQUEUE] = {
+		[0] = &_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_HIGH_PRIORITY],
-	[WORKQ_HIGH_PRIOQUEUE][WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
+		[WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
 			&_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_HIGH_OVERCOMMIT_PRIORITY],
-	[WORKQ_BG_PRIOQUEUE][0] = &_dispatch_root_queues[
+	},
+	[WORKQ_DEFAULT_PRIOQUEUE] = {
+		[0] = &_dispatch_root_queues[
+			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_PRIORITY],
+		[WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
+			&_dispatch_root_queues[
+			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_OVERCOMMIT_PRIORITY],
+	},
+	[WORKQ_LOW_PRIOQUEUE] = {
+		[0] = &_dispatch_root_queues[
+			DISPATCH_ROOT_QUEUE_IDX_LOW_PRIORITY],
+	  [WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
+			&_dispatch_root_queues[
+			DISPATCH_ROOT_QUEUE_IDX_LOW_OVERCOMMIT_PRIORITY],
+	},
+	[WORKQ_BG_PRIOQUEUE] = {
+		[0] = &_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_PRIORITY],
-	[WORKQ_BG_PRIOQUEUE][WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
+		[WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
 			&_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_OVERCOMMIT_PRIORITY],
+	},
 };
 #endif // HAVE_PTHREAD_WORKQUEUES
 
@@ -372,12 +444,20 @@ struct dispatch_queue_s _dispatch_mgr_q = {
 	.do_vtable = DISPATCH_VTABLE(queue_mgr),
 	.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 	.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-	.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+	.do_next = NULL,
 	.do_targetq = &_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_HIGH_OVERCOMMIT_PRIORITY],
-	.dq_label = "com.apple.libdispatch-manager",
+	.do_ctxt = NULL,
+	.do_finalizer = NULL,
+	.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+	.dq_running = 0,
 	.dq_width = 1,
+	.dq_items_tail = NULL,
+	.dq_items_head = NULL,
 	.dq_serialnum = 2,
+	.dq_specific_q = NULL,
+	// "com.apple.libdispatch-manager"
+	.dq_label = {'c', 'o', 'm', '.', 'a', 'p', 'p', 'l', 'e', '.', 'l', 'i', 'b', 'd', 'i', 's', 'p', 'a', 't', 'c', 'h', '-', 'm', 'a', 'n', 'a', 'g', 'e', 'r', '\0'},
 };
 
 dispatch_queue_t
@@ -580,7 +660,7 @@ DISPATCH_EXPORT DISPATCH_NOTHROW
 void
 dispatch_atfork_child(void)
 {
-	dispatch_object_t crash = (void *)0x100;
+	struct dispatch_object_s *crash = (struct dispatch_object_s *)0x100;
 	size_t i;
 
 	if (_dispatch_safe_fork) {
@@ -658,7 +738,7 @@ _dispatch_queue_dispose(dispatch_queue_t dq)
 	}
 
 	// trash the tail queue so that use after free will crash
-	dq->dq_items_tail = (dispatch_object_t)(void *)0x200;
+	dq->dq_items_tail = (struct dispatch_object_s *)0x200;
 
 	dispatch_queue_t dqsq = dispatch_atomic_xchg2o(dq, dq_specific_q,
 			(dispatch_queue_t)0x200);
@@ -1424,8 +1504,8 @@ _dispatch_function_recurse(dispatch_queue_t dq, void *ctxt,
 {
 	struct dispatch_function_recurse_s dfr = {
 		.dfr_dq = dq,
-		.dfr_func = func,
 		.dfr_ctxt = ctxt,
+		.dfr_func = func,
 	};
 	dispatch_sync_f(dq->do_targetq, &dfr, _dispatch_function_recurse_invoke);
 }
@@ -1525,6 +1605,9 @@ _dispatch_barrier_sync_f_slow(dispatch_queue_t dq, void *ctxt,
 	struct dispatch_barrier_sync_slow_s dbss = {
 		.do_vtable = (void *)(DISPATCH_OBJ_BARRIER_BIT |
 				DISPATCH_OBJ_SYNC_SLOW_BIT),
+		.do_ref_cnt = 0,
+		.do_xref_cnt = 0,
+		.do_next = NULL,
 		.dc_func = _dispatch_barrier_sync_f_slow_invoke,
 		.dc_ctxt = &dbss2,
 	};
@@ -1684,6 +1767,10 @@ _dispatch_sync_f_slow(dispatch_queue_t dq, void *ctxt, dispatch_function_t func)
 		DISPATCH_CONTINUATION_HEADER(sync_slow);
 	} dss = {
 		.do_vtable = (void*)DISPATCH_OBJ_SYNC_SLOW_BIT,
+		.do_ref_cnt = 0,
+		.do_xref_cnt = 0,
+		.do_next = NULL,
+		.dc_func = NULL,
 		.dc_ctxt = (void*)sema,
 	};
 	_dispatch_queue_push(dq, (struct dispatch_object_s *)&dss);
@@ -2886,6 +2973,7 @@ _dispatch_mgr_wakeup(dispatch_queue_t dq)
 	static const struct kevent kev = {
 		.ident = 1,
 		.filter = EVFILT_USER,
+		.flags = 0,
 		.fflags = NOTE_TRIGGER,
 	};
 

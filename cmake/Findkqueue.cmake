@@ -11,9 +11,11 @@ if (KQUEUE_IN_LIBC)
   set (_KQUEUE_LIB " ")
 else ()
   find_library(_KQUEUE_LIB "kqueue")
+  mark_as_advanced(_KQUEUE_LIB)
 endif ()
 
-set (KQUEUE_LIBRARIES "${_KQUEUE_LIB}" ${CMAKE_THREAD_LIBS_INIT})
+set (KQUEUE_LIBRARIES "${_KQUEUE_LIB}" ${CMAKE_THREAD_LIBS_INIT}
+  CACHE STRING "Libraries to link libkqueue")
 
 find_package_handle_standard_args(kqueue DEFAULT_MSG
   KQUEUE_LIBRARIES

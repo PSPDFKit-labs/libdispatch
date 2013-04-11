@@ -1,21 +1,25 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 2.8.10)
 
 project (dispatch)
 set (dispatch_VERSION "1.2")
 
 list (APPEND CMAKE_MODULE_PATH "${dispatch_SOURCE_DIR}/cmake")
 
-include (CTest)
-include (CMakePushCheckState)
-include (CheckCSourceCompiles)
 include (CheckCCompilerFlag)
+include (CheckCSourceCompiles)
+include (CMakePushCheckState)
+include (CTest)
 
-include (DSCheckFuncs)
+include (DSAddCompilerFlags)
 include (DSCheckDecls)
+include (DSCheckFuncs)
 include (DSCheckHeaders)
+include (DSSanitiseBuildType)
 include (DSSearchLibs)
-include (DSTargetAppendLinkerFlags)
-include (DSTargetAppendCompilerFlags)
+include (DSTargetAddLinkerFlags)
+
+DSSanitiseBuildType()
+message(STATUS "Build type is: ${CMAKE_BUILD_TYPE}")
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
   add_definitions(-D_GNU_SOURCE)
@@ -42,7 +46,10 @@ if (APPLE_XNU_SOURCE)
   set (apple_xnu_source_libkern_path "${APPLE_XNU_SOURCE}/libkern")
   set (apple_xnu_source_bsd_path "${APPLE_XNU_SOURCE}/bsd")
   set (apple_xnu_source_osfmk_path "${APPLE_XNU_SOURCE}/osfmk")
-  DispatchAddCFlags("-idirafter" "${apple_xnu_source_libkern_path}" "-isystem" "${apple_xnu_source_bsd_path}")
+  DSAddCompileFlags(DIRECTORY FLAGS
+    "-idirafter" "${apple_xnu_source_libkern_path}"
+    "-isystem" "${apple_xnu_source_bsd_path}"
+  )
 endif ()
 
 set (APPLE_OBJC4_SOURCE "" CACHE PATH "Specify path to Apple objc4 source")
@@ -52,7 +59,7 @@ endif ()
 
 set (APPLE_LIBAUTO_SOURCE "" CACHE PATH "Specify path to Apple libauto source")
 if (APPLE_LIBAUTO_SOURCE)
-  include_directories("${APPLE_LIBAUTO_SOURCE}")
+  include_directories(SYSTEM "${APPLE_LIBAUTO_SOURCE}")
 endif ()
 
 if (IS_DIRECTORY /System/Library/Frameworks/System.framework/PrivateHeaders)
@@ -83,9 +90,9 @@ endif ()
 #
 option(USE_APPLE_TSD_OPTIMIZATIONS "Use non-portable pthread TSD optimizations for Mac OS X." OFF)
 
-find_program(MIG mig)
-find_program(LEAKS leaks DOC "Path to Apple leaks program")
-if (LEAKS)
+find_program(MIG_EXECUTABLE mig)
+find_program(LEAKS_EXECUTABLE leaks DOC "Path to Apple leaks program")
+if (LEAKS_EXECUTABLE)
   set (HAVE_LEAKS YES)
 endif ()
 
@@ -101,17 +108,13 @@ endif ()
 # Find libraries we will need
 #
 
-
 DSSearchLibs(clock_gettime LIBRARIES rt)
 
 find_package(Threads REQUIRED)
 find_package(kqueue REQUIRED)
-find_package(BlocksRuntime)
 
-check_c_compiler_flag(-fblocks HAVE_BLOCKS)
-if (HAVE_BLOCKS)
-  set (CBLOCKS_FLAGS "-fblocks")
-endif ()
+find_package(CBlocks REQUIRED COMPONENTS private_headers
+  OPTIONAL_COMPONENTS compiler_support)
 
 DSCheckHeaders(
   TargetConditionals.h
@@ -175,9 +178,9 @@ cmake_pop_check_state()
 #
 DSCheckHeaders(mach/mach.h)
 if (HAVE_MACH_MACH_H)
-  set (HAVE_MACH 1 CACHE BOOL "Define if mach is present")
+  set (HAVE_MACH 1)
   set (USE_MIG 1)
-  set (__DARWIN_NON_CANCELABLE 1 CACHE BOOL "Define if using Darwin $NOCANCEL")
+  set (__DARWIN_NON_CANCELABLE 1)
 endif ()
 
 #
@@ -209,8 +212,9 @@ DSCheckFuncs(mach_absolute_time malloc_create_zone)
 DSCheckFuncs(sysctlbyname sysconf getprogname)
 DSCheckFuncs(strlcpy asprintf)
 
-DSCheckDecls(POSIX_SPAWN_SETEXEC    INCLUDES sys/spawn.h)
-DSCheckDecls(POSIX_SPAWN_START_SUSPENDED    INCLUDES sys/spawn.h)
+DSCheckDecls(POSIX_SPAWN_SETEXEC POSIX_SPAWN_START_SUSPENDED
+  INCLUDES sys/spawn.h
+)
 
 #
 # We support both Mach semaphores and POSIX semaphores; if the former are
@@ -265,7 +269,4 @@ configure_file("config/config.h.cmake.in"
 ################################################################################
 
 add_subdirectory(src)
-
-if (HAVE_BLOCKS)
   add_subdirectory(testing)
-endif ()

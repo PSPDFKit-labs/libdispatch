@@ -8,8 +8,9 @@ set (sources
   semaphore.c
   source.c
   time.c
-  protocol.defs
-  provider.d
+)
+
+set (private_headers
   data_internal.h
   internal.h
   io_internal.h
@@ -30,13 +31,34 @@ set (sources
   shims/tsd.h
 )
 
-if (HAVE_BLOCKS)
+set (public_headers
+  dispatch/base.h
+  dispatch/data.h
+  dispatch/dispatch.h
+  dispatch/group.h
+  dispatch/io.h
+  dispatch/object.h
+  dispatch/once.h
+  dispatch/queue.h
+  dispatch/semaphore.h
+  dispatch/source.h
+  dispatch/time.h
+)
+
+if (CBLOCKS_COMPILER_SUPPORT_FOUND)
   list (APPEND sources
     data.c
     data_additions.c
     io.c
     io_additions.c
     transform.c
+  )
+endif ()
+
+if (USE_MIG)
+  list(APPEND sources
+    protocol.defs
+    provider.d
   )
 endif ()
 
@@ -47,7 +69,7 @@ include_directories (
   "${dispatch_SOURCE_DIR}/os"
   "${KQUEUE_INCLUDE_DIRS}"
   "${PTHREAD_WORKQUEUE_INCLUDE_DIRS}"
-  "${BLOCKS_RUNTIME_INCLUDE_DIRS}"
+  "${CBLOCKS_INCLUDE_DIRS}"
 )
 
 
@@ -57,7 +79,7 @@ set (cflags
   -Wno-unused-parameter
   ${VISIBILITY_FLAGS}
   ${OMIT_LEAF_FP_FLAGS}
-  ${CBLOCKS_FLAGS}
+  ${CBLOCKS_COMPILE_FLAGS}
 )
 
 if (CMAKE_C_COMPILER_ID MATCHES "GNU")
@@ -74,7 +96,7 @@ endif ()
 
 if (USE_OBJC)
   list (APPEND sources object.m)
-  set_property(SOURCE object.m APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-gc")
+  DSAddCompilerFlags(SOURCE object.m FLAGS "-fobjc-gc")
   
   list (APPEND linker_flags
     -Wl,-upward-lobjc
@@ -102,10 +124,10 @@ endif ()
 add_library(libdispatch_static STATIC ${sources})
 add_library(libdispatch_shared SHARED ${sources})
 
-DSTargetAppendCompilerFlags(TARGET libdispatch_static libdispatch_shared
+DSAddCompilerFlags(TARGET libdispatch_static libdispatch_shared
   FLAGS ${cflags})
 
-DSTargetAppendLinkerFlags(TARGET libdispatch_static libdispatch_shared
+DSTargetAddLinkerFlags(TARGET libdispatch_static libdispatch_shared
   FLAGS ${linker_flags})
 
 foreach (target libdispatch_shared libdispatch_static)
@@ -113,7 +135,7 @@ foreach (target libdispatch_shared libdispatch_static)
     ${CMAKE_THREAD_LIBS_INIT}
     ${PTHREAD_WORKQUEUE_LIBRARIES}
     ${KQUEUE_LIBRARIES}
-    ${BLOCKS_RUNTIME_LIBRARIES}
+    ${CBLOCKS_LIBRARIES}
     ${CLOCK_GETTIME_LIBRARIES}
   )
 endforeach ()

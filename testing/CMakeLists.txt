@@ -1,5 +1,8 @@
-# INCLUDE(CTest)
-# enable_testing ()
+
+if (NOT CBLOCKS_COMPILER_SUPPORT_FOUND)
+  return ()
+endif ()
+
 
 set_property(DIRECTORY PROPERTY EXCLUDE_FROM_ALL 1)
 
@@ -63,7 +66,7 @@ set (dispatch_tests_CFLAGS
   -Wall
   -Wextra
   -Wno-unused-parameter
-  ${CBLOCKS_FLAGS}
+  ${CBLOCKS_COMPILE_FLAGS}
 )
 
 # Sometimes we need to link additional libraries for maths functions
@@ -94,7 +97,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E
 include_directories(
   "${KQUEUE_INCLUDE_DIRS}"
   "${PTHREAD_WORKQUEUE_INCLUDE_DIRS}"
-  "${BLOCKS_RUNTIME_INCLUDE_DIRS}"
+  "${CBLOCKS_INCLUDE_DIRS}"
 )
 
 if (HAVE_COREFOUNDATION)
@@ -157,7 +160,7 @@ foreach (test IN LISTS dispatch_tests)
       COMPILE_DEFINITIONS ${${test}_LIBRARIES})
   endif ()
 
-  DSTargetAppendCompilerFlags(TARGET "${test}" FLAGS
+  DSAddCompilerFlags(TARGET "${test}" FLAGS
     ${dispatch_tests_CFLAGS}
   )
 
@@ -182,7 +185,7 @@ add_executable(bsdtestsummarize
 target_link_libraries(bsdtestharness ${dispatch_tests_LIBRARIES})
 target_link_libraries(bsdtestsummarize ${dispatch_tests_LIBRARIES})
 
-DSTargetAppendCompilerFlags(TARGET bsdtestharness bsdtestsummarize FLAGS
+DSAddCompilerFlags(TARGET bsdtestharness bsdtestsummarize FLAGS
   ${dispatch_tests_CFLAGS}
 )
 

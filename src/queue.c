@@ -2623,7 +2623,8 @@ DISPATCH_NOINLINE DISPATCH_NORETURN
 static void
 _dispatch_sigsuspend(void)
 {
-	static const sigset_t mask;
+	static sigset_t mask;
+	sigemptyset(&mask);
 
 #if DISPATCH_COCOA_COMPAT
 	// Do not count the signal handling thread as a worker thread

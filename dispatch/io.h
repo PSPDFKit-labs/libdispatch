@@ -168,6 +168,8 @@ dispatch_write_f_np(dispatch_fd_t fd,
   void *context,
   void (*handler)(dispatch_data_t data, int error, void *context));
 
+__END_DECLS
+
 /*!
  * @functiongroup Dispatch I/O Channel API
  */
@@ -218,6 +220,8 @@ typedef void (*dispatch_io_function_t)(bool done, dispatch_data_t data,
 #define DISPATCH_IO_RANDOM 1
 
 typedef unsigned long dispatch_io_type_t;
+
+__BEGIN_DECLS
 
 /*!
  * @function dispatch_io_create

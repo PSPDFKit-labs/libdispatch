@@ -692,7 +692,7 @@ _dispatch_source_drain_kevent(struct kevent *ke)
 #pragma mark dispatch_kevent_t
 
 static struct dispatch_kevent_s _dispatch_kevent_data_or = {
-	.dk_list = {0},
+	.dk_list = { NULL, NULL },
 	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_or.dk_sources),
 	.dk_kevent = {
 		.ident = 0,
@@ -704,7 +704,7 @@ static struct dispatch_kevent_s _dispatch_kevent_data_or = {
 	},
 };
 static struct dispatch_kevent_s _dispatch_kevent_data_add = {
-	.dk_list = {0},
+	.dk_list = { NULL, NULL },
 	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_add.dk_sources),
 	.dk_kevent = {
 		.ident = 0,
@@ -927,7 +927,7 @@ _dispatch_kevent_unregister(dispatch_source_t ds)
 DISPATCH_CACHELINE_ALIGN
 static struct dispatch_kevent_s _dispatch_kevent_timer[] = {
 	[DISPATCH_TIMER_INDEX_WALL] = {
-		.dk_list = {0},
+		.dk_list = { NULL, NULL },
 		.dk_sources = TAILQ_HEAD_INITIALIZER(
 				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_WALL].dk_sources),
 		.dk_kevent = {
@@ -940,7 +940,7 @@ static struct dispatch_kevent_s _dispatch_kevent_timer[] = {
 		},
 	},
 	[DISPATCH_TIMER_INDEX_MACH] = {
-		.dk_list = {0},
+		.dk_list = { NULL, NULL },
 		.dk_sources = TAILQ_HEAD_INITIALIZER(
 				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_MACH].dk_sources),
 		.dk_kevent = {
@@ -953,7 +953,7 @@ static struct dispatch_kevent_s _dispatch_kevent_timer[] = {
 		},
 	},
 	[DISPATCH_TIMER_INDEX_DISARM] = {
-		.dk_list = {0},
+		.dk_list = { NULL, NULL },
 		.dk_sources = TAILQ_HEAD_INITIALIZER(
 				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_DISARM].dk_sources),
 		.dk_kevent = {

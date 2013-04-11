@@ -58,7 +58,7 @@ set (cflags
 )
 
 if (CMAKE_C_COMPILER_ID MATCHES "GNU")
-  list(APPEND cflags -Wno-unknown-pragmas)
+  list(APPEND cflags -Wno-unknown-pragmas -Wno-missing-field-initializers)
 endif ()
 
 if (HAVE_DARWIN_LD)

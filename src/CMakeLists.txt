@@ -20,6 +20,16 @@ if (CBLOCKS_COMPILER_SUPPORT_FOUND)
   )
 endif ()
 
+option (COMPILE_C_AS_CXX "Compile .c sources as C++" FALSE)
+if (COMPILE_C_AS_CXX)
+  set_property(SOURCE ${sources} PROPERTY LANGUAGE CXX)
+  set_property(SOURCE ${sources} APPEND PROPERTY 
+    COMPILE_DEFINITIONS "__STDC_LIMIT_MACROS;__STDC_FORMAT_MACROS"
+  )
+  # Suppress Clang warning
+  DSAddCompilerFlags(SOURCE ${sources} FLAGS "-x c++")
+endif ()
+
 if (USE_MIG)
   list(APPEND sources
     protocol.defs

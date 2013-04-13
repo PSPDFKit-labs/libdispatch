@@ -72,6 +72,19 @@
 #define OS_OBJECT_HAVE_OBJC_SUPPORT 0
 #endif // USE_OBJC
 
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+#ifndef __has_include
+#define __has_include(x) 0
+#endif
+#ifndef __has_feature
+#define __has_feature(x) 0
+#endif
+#ifndef __has_attribute
+#define __has_attribute(x) 0
+#endif
+
 #include <dispatch/dispatch.h>
 #include <dispatch/base.h>
 
@@ -172,19 +185,6 @@
 #include <syslog.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-
-#ifndef __has_builtin
-#define __has_builtin(x) 0
-#endif
-#ifndef __has_include
-#define __has_include(x) 0
-#endif
-#ifndef __has_feature
-#define __has_feature(x) 0
-#endif
-#ifndef __has_attribute
-#define __has_attribute(x) 0
 #endif
 
 #define DISPATCH_NOINLINE __attribute__((__noinline__))

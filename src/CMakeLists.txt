@@ -10,41 +10,6 @@ set (sources
   time.c
 )
 
-set (private_headers
-  data_internal.h
-  internal.h
-  io_internal.h
-  object_internal.h
-  queue_internal.h
-  semaphore_internal.h
-  shims.h
-  source_internal.h
-  trace.h
-  shims/atomic.h
-  shims/getprogname.h
-  shims/hw_config.h
-  shims/malloc_zone.h
-  shims/perfmon.h
-  shims/queue.h
-  shims/strlcpy.h
-  shims/time.h
-  shims/tsd.h
-)
-
-set (public_headers
-  dispatch/base.h
-  dispatch/data.h
-  dispatch/dispatch.h
-  dispatch/group.h
-  dispatch/io.h
-  dispatch/object.h
-  dispatch/once.h
-  dispatch/queue.h
-  dispatch/semaphore.h
-  dispatch/source.h
-  dispatch/time.h
-)
-
 if (CBLOCKS_COMPILER_SUPPORT_FOUND)
   list (APPEND sources
     data.c
@@ -146,4 +111,10 @@ set_property(TARGET libdispatch_static libdispatch_shared PROPERTY
 set_target_properties(libdispatch_shared PROPERTIES 
   SOVERSION 0
   VERSION ${dispatch_VERSION}
+)
+
+install(
+  TARGETS libdispatch_shared libdispatch_static
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
 )

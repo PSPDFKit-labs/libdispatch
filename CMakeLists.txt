@@ -25,6 +25,9 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
   add_definitions(-D_GNU_SOURCE)
 endif ()
 
+set (DISPATCH_INCLUDE_DIR "include/dispatch" CACHE STRING
+  "Appended to CMAKE_INSTALL_PREFIX to determine where the headers are installed.")
+
 ################################################################################
 # Darwin-specific stuff
 # 
@@ -269,4 +272,11 @@ configure_file("config/config.h.cmake.in"
 ################################################################################
 
 add_subdirectory(src)
-  add_subdirectory(testing)
+add_subdirectory(testing)
+
+# Install man pages
+add_subdirectory(man)
+
+# Install public headers
+add_subdirectory(dispatch) 
+add_subdirectory(os)

@@ -119,6 +119,11 @@ find_package(kqueue REQUIRED)
 find_package(CBlocks REQUIRED COMPONENTS private_headers
   OPTIONAL_COMPONENTS compiler_support)
 
+if (NOT CBLOCKS_COMPILER_SUPPORT_FOUND)
+  message(WARNING "Blocks compiler support was not found; dispatch i/o "
+                  "will not be built.")
+endif ()
+
 DSCheckHeaders(
   TargetConditionals.h
   pthread_np.h

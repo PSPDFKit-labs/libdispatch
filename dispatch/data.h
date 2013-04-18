@@ -26,8 +26,6 @@
 #include <dispatch/base.h> // for HeaderDoc
 #endif
 
-__BEGIN_DECLS
-
 /*! @header
  * Dispatch data objects describe contiguous or sparse regions of memory that
  * may be managed by the system or by the application.
@@ -40,6 +38,8 @@ __BEGIN_DECLS
  * A dispatch object representing memory regions.
  */
 DISPATCH_DECL(dispatch_data);
+
+__BEGIN_DECLS
 
 /*!
  * @var dispatch_data_empty

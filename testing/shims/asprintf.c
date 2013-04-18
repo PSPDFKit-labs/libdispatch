@@ -23,7 +23,7 @@
 
 #include "config/config.h"
 
-#ifndef HAVE_VASPRINTF
+#if !HAVE_VASPRINTF
 
 #include <stdio.h>
 #include <errno.h>
@@ -79,7 +79,7 @@ fail:
 }
 #endif
 
-#ifndef HAVE_ASPRINTF
+#if !HAVE_ASPRINTF
 int asprintf(char **str, const char *fmt, ...)
 {
 	va_list ap;

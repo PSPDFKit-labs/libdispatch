@@ -20,7 +20,7 @@
 #ifndef __DISPATCH_TESTS_SHIMS_FGETLN__
 #define __DISPATCH_TESTS_SHIMS_FGETLN__
 
-#ifndef HAVE_FGETLN
+#if !HAVE_FGETLN
 #include <stdio.h>
 
 char *fgetln(FILE *stream, size_t *len);

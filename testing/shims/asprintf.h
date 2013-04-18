@@ -20,7 +20,7 @@
 #ifndef __DISPATCH_TESTS_SHIMS_ASPRINTF__
 #define __DISPATCH_TESTS_SHIMS_ASPRINTF__
 
-#ifndef HAVE_ASPRINTF
+#if !HAVE_ASPRINTF
 int asprintf(char **str, const char *fmt, ...);
 #endif
 

@@ -43,8 +43,15 @@
 #include "shims/queue.h"
 #endif
 
-#ifndef HAVE_STRLCPY
+#if !HAVE_STRLCPY
 #include "shims/strlcpy.h"
+#endif
+
+// FIXME
+#ifdef __BLOCKS__
+#define WITH_DISPATCH_IO 1
+#else 
+#define WITH_DISPATCH_IO 0
 #endif
 
 #if USE_OBJC && ((!TARGET_IPHONE_SIMULATOR && defined(__i386__)) || \
@@ -64,6 +71,19 @@
 #else
 #define OS_OBJECT_HAVE_OBJC_SUPPORT 0
 #endif // USE_OBJC
+
+#ifndef __has_builtin
+#define __has_builtin(x) 0
+#endif
+#ifndef __has_include
+#define __has_include(x) 0
+#endif
+#ifndef __has_feature
+#define __has_feature(x) 0
+#endif
+#ifndef __has_attribute
+#define __has_attribute(x) 0
+#endif
 
 #include <dispatch/dispatch.h>
 #include <dispatch/base.h>
@@ -165,19 +185,6 @@
 #include <syslog.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-
-#ifndef __has_builtin
-#define __has_builtin(x) 0
-#endif
-#ifndef __has_include
-#define __has_include(x) 0
-#endif
-#ifndef __has_feature
-#define __has_feature(x) 0
-#endif
-#ifndef __has_attribute
-#define __has_attribute(x) 0
 #endif
 
 #define DISPATCH_NOINLINE __attribute__((__noinline__))
@@ -353,7 +360,7 @@ DISPATCH_ALWAYS_INLINE
 static inline void
 _dispatch_client_callout_block(dispatch_block_t b)
 {
-	struct Block_basic *bb = (void*)b;
+	struct Block_basic *bb = (struct Block_basic *)b;
 	return _dispatch_client_callout(b, (dispatch_function_t)bb->Block_invoke);
 }
 
@@ -502,8 +509,12 @@ extern struct _dispatch_hw_config_s {
 #include "semaphore_internal.h"
 #include "queue_internal.h"
 #include "source_internal.h"
-#include "data_internal.h"
+
+#if WITH_DISPATCH_IO
 #include "io_internal.h"
+#include "data_internal.h"
+#endif
+
 #include "trace.h"
 
 #endif /* __DISPATCH_INTERNAL__ */

@@ -5,32 +5,31 @@ Pthreads getting you down? [libdispatch](http://libdispatch.macosforge.org), aka
 
 Currently, the trunk of the [official SVN repository](http://libdispatch.macosforge.org/trac/browser) doesn't build on Linux; the last revision that builds out-of-the-box is `r199`, but that revision doesn't contain any of the nifty APIs added in OS X Lion, e.g. asynchronous I/O. This repo applies some patches by Mark Heily, taken from [his post to the libdispatch mailing list](http://lists.macosforge.org/pipermail/libdispatch-dev/2012-August/000676.html), along with some other fixes that I've cobbled together. It has not been exhaustively tested, but it seems to work well enough.
 
-Patches are very welcome; I'm not terribly familiar with Linux.
+Patches are very welcome!
 
 ### Changes from Apple's official version
 I've added the ability to integrate libdispatch's main queue with third-party run-loops, e.g. GLib's `GMainLoop`. Call `dispatch_get_main_queue_eventfd_np()` to get a file descriptor your run-loop can monitor for reading; when it becomes readable, call `eventfd_read(2)` to acknowledge the wakeup, then call `dispatch_main_queue_drain_np()` to execute the pending tasks.
 
-I've also added missing `_f` variants for several functions in `data.h` and `io.h` that took [Objective-C blocks](http://developer.apple.com/library/ios/#documentation/cocoa/Conceptual/Blocks/Articles/00_Introduction.html) only: look for the functions with `_np` appended to them. Although you can make full use of libdispatch with compilers like GCC that don't support blocks, libdispatch itself must be built with Clang, as it makes use of blocks internally.
+I've also added missing `_f` variants for several functions in `data.h` and `io.h` that took [Objective-C blocks](http://developer.apple.com/library/ios/#documentation/cocoa/Conceptual/Blocks/Articles/00_Introduction.html) only: look for the functions with `_np` appended to them. Although you can make full use of libdispatch with compilers like GCC that don't support blocks, it is not advisable to build libdispatch itself with anything other than Clang, as the dispatch i/o portion cannot be built without compiler support for blocks.
 
 Prerequisities
 --------------
 - [libBlocksRuntime](http://mark.heily.com/project/libblocksruntime)
 - [libpthread_workqueue](http://mark.heily.com/project/libpthread_workqueue)
 - [libkqueue](http://mark.heily.com/project/libkqueue)
-- Clang
-- automake/autoconf/libtool
+- [Clang](http://llvm.org)
+- [CMake](http://cmake.org)
 
 How to build
 ------------
-The following does the job on Ubuntu 12.04:
+The following does the job on Ubuntu 12.10:
 
-    sudo apt-get install libblocksruntime-dev libkqueue-dev libpthread-workqueue-dev
-    git clone git://github.com/nickhutchinson/libdispatch.git && cd libdispatch
-    sh autogen.sh
-    ./configure CFLAGS="-I/usr/include/kqueue" LDFLAGS="-lkqueue -lpthread_workqueue -pthread -lm"
+    sudo apt-get install libblocksruntime-dev libkqueue-dev libpthread-workqueue-dev cmake
+    git clone git://github.com/nickhutchinson/libdispatch.git
+    mkdir libdispatch-build && cd libdispatch-build
+    cmake ../libdispatch -DCMAKE_C_COMPILER=clang -DCMAKE_BUILD_TYPE=Release
     make
     sudo make install
-    sudo ldconfig
 
 Testing
 -------
@@ -81,5 +80,5 @@ Demo
     }
     EOF
 
-    clang dispatch_test.c -I/usr/local/include -L/usr/local/lib -ldispatch -o dispatchTest
+    clang dispatch_test.c -I/usr/local/include/dispatch -L/usr/local/lib -ldispatch -o dispatchTest
     ./dispatchTest

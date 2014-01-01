@@ -36,6 +36,14 @@
 #define pthread_workqueue_t void*
 #endif
 
+#if HAVE_PTHREAD_WORKQUEUES
+#define DISPATCH_WORKQ_OPTION_OVERCOMMIT WORKQ_ADDTHREADS_OPTION_OVERCOMMIT
+#define DISPATCH_WORKQ_BG_PRIOQUEUE WORKQ_BG_PRIOQUEUE
+#define DISPATCH_WORKQ_LOW_PRIOQUEUE WORKQ_LOW_PRIOQUEUE
+#define DISPATCH_WORKQ_DEFAULT_PRIOQUEUE WORKQ_DEFAULT_PRIOQUEUE
+#define DISPATCH_WORKQ_HIGH_PRIOQUEUE WORKQ_HIGH_PRIOQUEUE
+#endif
+
 static void _dispatch_cache_cleanup(void *value);
 static void _dispatch_async_f_redirect(dispatch_queue_t dq,
 		dispatch_continuation_t dc);
@@ -149,7 +157,7 @@ DISPATCH_CACHELINE_ALIGN
 static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	[DISPATCH_ROOT_QUEUE_IDX_LOW_PRIORITY] = {{{
 #if HAVE_PTHREAD_WORKQUEUES
-		.dgq_wq_priority = WORKQ_LOW_PRIOQUEUE,
+		.dgq_wq_priority = DISPATCH_WORKQ_LOW_PRIOQUEUE,
 		.dgq_wq_options = 0,
 #endif
 #if DISPATCH_ENABLE_THREAD_POOL
@@ -160,8 +168,8 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_LOW_OVERCOMMIT_PRIORITY] = {{{
 #if HAVE_PTHREAD_WORKQUEUES
-		.dgq_wq_priority = WORKQ_LOW_PRIOQUEUE,
-		.dgq_wq_options = WORKQ_ADDTHREADS_OPTION_OVERCOMMIT,
+		.dgq_wq_priority = DISPATCH_WORKQ_LOW_PRIOQUEUE,
+		.dgq_wq_options = DISPATCH_WORKQ_OPTION_OVERCOMMIT,
 #endif
 #if DISPATCH_ENABLE_THREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
@@ -171,7 +179,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_DEFAULT_PRIORITY] = {{{
 #if HAVE_PTHREAD_WORKQUEUES
-		.dgq_wq_priority = WORKQ_DEFAULT_PRIOQUEUE,
+		.dgq_wq_priority = DISPATCH_WORKQ_DEFAULT_PRIOQUEUE,
 		.dgq_wq_options = 0,
 #endif
 #if DISPATCH_ENABLE_THREAD_POOL
@@ -182,8 +190,8 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_DEFAULT_OVERCOMMIT_PRIORITY] = {{{
 #if HAVE_PTHREAD_WORKQUEUES
-		.dgq_wq_priority = WORKQ_DEFAULT_PRIOQUEUE,
-		.dgq_wq_options = WORKQ_ADDTHREADS_OPTION_OVERCOMMIT,
+		.dgq_wq_priority = DISPATCH_WORKQ_DEFAULT_PRIOQUEUE,
+		.dgq_wq_options = DISPATCH_WORKQ_OPTION_OVERCOMMIT,
 #endif
 #if DISPATCH_ENABLE_THREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
@@ -193,7 +201,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_HIGH_PRIORITY] = {{{
 #if HAVE_PTHREAD_WORKQUEUES
-		.dgq_wq_priority = WORKQ_HIGH_PRIOQUEUE,
+		.dgq_wq_priority = DISPATCH_WORKQ_HIGH_PRIOQUEUE,
 		.dgq_wq_options = 0,
 #endif
 #if DISPATCH_ENABLE_THREAD_POOL
@@ -204,8 +212,8 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_HIGH_OVERCOMMIT_PRIORITY] = {{{
 #if HAVE_PTHREAD_WORKQUEUES
-		.dgq_wq_priority = WORKQ_HIGH_PRIOQUEUE,
-		.dgq_wq_options = WORKQ_ADDTHREADS_OPTION_OVERCOMMIT,
+		.dgq_wq_priority = DISPATCH_WORKQ_HIGH_PRIOQUEUE,
+		.dgq_wq_options = DISPATCH_WORKQ_OPTION_OVERCOMMIT,
 #endif
 #if DISPATCH_ENABLE_THREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
@@ -215,7 +223,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_PRIORITY] = {{{
 #if HAVE_PTHREAD_WORKQUEUES
-		.dgq_wq_priority = WORKQ_BG_PRIOQUEUE,
+		.dgq_wq_priority = DISPATCH_WORKQ_BG_PRIOQUEUE,
 		.dgq_wq_options = 0,
 #endif
 #if DISPATCH_ENABLE_THREAD_POOL
@@ -226,8 +234,8 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 	}}},
 	[DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_OVERCOMMIT_PRIORITY] = {{{
 #if HAVE_PTHREAD_WORKQUEUES
-		.dgq_wq_priority = WORKQ_BG_PRIOQUEUE,
-		.dgq_wq_options = WORKQ_ADDTHREADS_OPTION_OVERCOMMIT,
+		.dgq_wq_priority = DISPATCH_WORKQ_BG_PRIOQUEUE,
+		.dgq_wq_options = DISPATCH_WORKQ_OPTION_OVERCOMMIT,
 #endif
 #if DISPATCH_ENABLE_THREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
@@ -340,30 +348,32 @@ struct dispatch_queue_s _dispatch_root_queues[] = {
 	},
 };
 
-#if HAVE_PTHREAD_WORKQUEUES
+#if HAVE_PTHREAD_WORKQUEUE_SETDISPATCH_NP
 static const dispatch_queue_t _dispatch_wq2root_queues[][2] = {
-	[WORKQ_LOW_PRIOQUEUE][0] = &_dispatch_root_queues[
+	[DISPATCH_WORKQ_LOW_PRIOQUEUE][0] = &_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_LOW_PRIORITY],
-	[WORKQ_LOW_PRIOQUEUE][WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
-			&_dispatch_root_queues[
+	[DISPATCH_WORKQ_LOW_PRIOQUEUE][DISPATCH_WORKQ_ADDTHREADS_OPTION_OVERCOMMIT]
+		= &_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_LOW_OVERCOMMIT_PRIORITY],
-	[WORKQ_DEFAULT_PRIOQUEUE][0] = &_dispatch_root_queues[
+	[DISPATCH_WORKQ_DEFAULT_PRIOQUEUE][0] = &_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_PRIORITY],
-	[WORKQ_DEFAULT_PRIOQUEUE][WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
+	[DISPATCH_WORKQ_DEFAULT_PRIOQUEUE]
+		[DISPATCH_WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
 			&_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_OVERCOMMIT_PRIORITY],
-	[WORKQ_HIGH_PRIOQUEUE][0] = &_dispatch_root_queues[
+	[DISPATCH_WORKQ_HIGH_PRIOQUEUE][0] = &_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_HIGH_PRIORITY],
-	[WORKQ_HIGH_PRIOQUEUE][WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
+	[DISPATCH_WORKQ_HIGH_PRIOQUEUE]
+		[DISPATCH_WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
 			&_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_HIGH_OVERCOMMIT_PRIORITY],
-	[WORKQ_BG_PRIOQUEUE][0] = &_dispatch_root_queues[
+	[DISPATCH_WORKQ_BG_PRIOQUEUE][0] = &_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_PRIORITY],
-	[WORKQ_BG_PRIOQUEUE][WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
+	[DISPATCH_WORKQ_BG_PRIOQUEUE][DISPATCH_WORKQ_ADDTHREADS_OPTION_OVERCOMMIT] =
 			&_dispatch_root_queues[
-			DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_OVERCOMMIT_PRIORITY],
+				DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_OVERCOMMIT_PRIORITY],
 };
-#endif // HAVE_PTHREAD_WORKQUEUES
+#endif // HAVE_PTHREAD_WORKQUEUE_SETDISPATCH_NP
 
 // 6618342 Contact the team that owns the Instrument DTrace probe before
 //         renaming this symbol
@@ -435,22 +445,21 @@ _dispatch_root_queues_init_workq(void)
 			(void)dispatch_assume_zero(r);
 		}
 #endif
-		int i;
-		for (i = 0; i < DISPATCH_ROOT_QUEUE_COUNT; i++) {
+		for (int i = 0; i < DISPATCH_ROOT_QUEUE_COUNT; i++) {
 			pthread_workqueue_t pwq = NULL;
 			struct dispatch_root_queue_context_s *qc =
 					&_dispatch_root_queue_contexts[i];
 #if DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK
 			if (!disable_wq
 #if DISPATCH_NO_BG_PRIORITY
-					&& (qc->dgq_wq_priority != WORKQ_BG_PRIOQUEUE)
+					&& (qc->dgq_wq_priority != DISPATCH_WORKQ_BG_PRIOQUEUE)
 #endif
 			) {
 				r = pthread_workqueue_attr_setqueuepriority_np(&pwq_attr,
 						qc->dgq_wq_priority);
 				(void)dispatch_assume_zero(r);
 				r = pthread_workqueue_attr_setovercommit_np(&pwq_attr,
-						qc->dgq_wq_options & WORKQ_ADDTHREADS_OPTION_OVERCOMMIT);
+						qc->dgq_wq_options & DISPATCH_WORKQ_OPTION_OVERCOMMIT);
 				(void)dispatch_assume_zero(r);
 				r = pthread_workqueue_create_np(&pwq, &pwq_attr);
 				(void)dispatch_assume_zero(r);
@@ -2447,7 +2456,7 @@ _dispatch_worker_thread2(int priority, int options,
 		void *context DISPATCH_UNUSED)
 {
 	dispatch_assert(priority >= 0 && priority < WORKQ_NUM_PRIOQUEUE);
-	dispatch_assert(!(options & ~WORKQ_ADDTHREADS_OPTION_OVERCOMMIT));
+	dispatch_assert(!(options & ~DISPATCH_WORKQ_OPTION_OVERCOMMIT));
 	dispatch_queue_t dq = _dispatch_wq2root_queues[priority][options];
 	struct dispatch_root_queue_context_s *qc = dq->do_ctxt;
 

@@ -80,5 +80,5 @@ Demo
     }
     EOF
 
-    clang dispatch_test.c -I/usr/local/include/dispatch -L/usr/local/lib -ldispatch -o dispatchTest
+    clang dispatch_test.c -I/usr/local/include -L/usr/local/lib -ldispatch -o dispatchTest
     ./dispatchTest

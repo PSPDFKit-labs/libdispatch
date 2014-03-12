@@ -20,13 +20,11 @@
 
 #include "internal.h"
 
-typedef void (*dispatch_apply_function_t)(void *, size_t);
-
 DISPATCH_ALWAYS_INLINE
 static inline void
 _dispatch_apply_invoke(void *ctxt)
 {
-	dispatch_apply_t da = (dispatch_apply_t)ctxt;
+	dispatch_apply_t da = ctxt;
 	size_t const iter = da->da_iterations;
 	typeof(da->da_func) const func = da->da_func;
 	void *const da_ctxt = da->da_ctxt;
@@ -67,9 +65,8 @@ _dispatch_apply2(void *ctxt)
 static void
 _dispatch_apply3(void *ctxt)
 {
-	dispatch_apply_t da = (dispatch_apply_t)ctxt;
-	dispatch_queue_t old_dq = (dispatch_queue_t)
-			_dispatch_thread_getspecific(dispatch_queue_key);
+	dispatch_apply_t da = ctxt;
+	dispatch_queue_t old_dq = _dispatch_thread_getspecific(dispatch_queue_key);
 
 	_dispatch_thread_setspecific(dispatch_queue_key, da->da_queue);
 	_dispatch_apply_invoke(ctxt);
@@ -79,7 +76,7 @@ _dispatch_apply3(void *ctxt)
 static void
 _dispatch_apply_serial(void *ctxt)
 {
-	dispatch_apply_t da = (dispatch_apply_t)ctxt;
+	dispatch_apply_t da = ctxt;
 	size_t idx = 0;
 
 	_dispatch_workitem_dec(); // this unit executes many items
@@ -137,7 +134,7 @@ _dispatch_apply_f2(dispatch_queue_t dq, dispatch_apply_t da,
 static void
 _dispatch_apply_redirect(void *ctxt)
 {
-	dispatch_apply_t da = (dispatch_apply_t)ctxt;
+	dispatch_apply_t da = ctxt;
 	uint32_t da_width = 2 * (da->da_thr_cnt - 1);
 	dispatch_queue_t dq = da->da_queue, rq = dq, tq;
 
@@ -196,8 +193,7 @@ dispatch_apply_f(size_t iterations, dispatch_queue_t dq, void *ctxt,
 			slowpath(_dispatch_thread_getspecific(dispatch_apply_key))) {
 		return dispatch_sync_f(dq, da, _dispatch_apply_serial);
 	}
-	dispatch_queue_t old_dq = (dispatch_queue_t)
-			_dispatch_thread_getspecific(dispatch_queue_key);
+	dispatch_queue_t old_dq = _dispatch_thread_getspecific(dispatch_queue_key);
 	if (slowpath(dq->do_targetq)) {
 		if (slowpath(dq == old_dq)) {
 			return dispatch_sync_f(dq, da, _dispatch_apply_serial);
@@ -219,9 +215,8 @@ static void
 _dispatch_apply_slow(size_t iterations, dispatch_queue_t dq,
 		void (^work)(size_t))
 {
-	struct Block_basic *bb = (struct Block_basic *)_dispatch_Block_copy((void *)work);
-	dispatch_apply_f(iterations, dq, bb,
-	                 (dispatch_apply_function_t)bb->Block_invoke);
+	struct Block_basic *bb = (void *)_dispatch_Block_copy((void *)work);
+	dispatch_apply_f(iterations, dq, bb, (void *)bb->Block_invoke);
 	Block_release(bb);
 }
 #endif
@@ -236,9 +231,8 @@ dispatch_apply(size_t iterations, dispatch_queue_t dq, void (^work)(size_t))
 		return _dispatch_apply_slow(iterations, dq, work);
 	}
 #endif
-	struct Block_basic *bb = (struct Block_basic *)work;
-	dispatch_apply_f(iterations, dq, bb,
-	                 (dispatch_apply_function_t)bb->Block_invoke);
+	struct Block_basic *bb = (void *)work;
+	dispatch_apply_f(iterations, dq, bb, (void *)bb->Block_invoke);
 }
 #endif
 
@@ -248,7 +242,7 @@ void
 dispatch_stride(size_t offset, size_t stride, size_t iterations,
 		dispatch_queue_t dq, void (^work)(size_t))
 {
-	struct Block_basic *bb = (struct Block_basic *)work;
+	struct Block_basic *bb = (void *)work;
 	dispatch_stride_f(offset, stride, iterations, dq, bb,
 			(void *)bb->Block_invoke);
 }

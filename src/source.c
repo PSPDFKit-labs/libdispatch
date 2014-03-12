@@ -83,8 +83,7 @@ dispatch_source_create(dispatch_source_type_t type,
 		break;
 	}
 
-	dk = (struct dispatch_kevent_s *)calloc(
-			1ul, sizeof(struct dispatch_kevent_s));
+	dk = calloc(1ul, sizeof(struct dispatch_kevent_s));
 	dk->dk_kevent = *proto_kev;
 	dk->dk_kevent.ident = handle;
 	dk->dk_kevent.flags |= EV_ADD|EV_ENABLE;
@@ -92,7 +91,7 @@ dispatch_source_create(dispatch_source_type_t type,
 	dk->dk_kevent.udata = dk;
 	TAILQ_INIT(&dk->dk_sources);
 
-	ds = (dispatch_source_t)_dispatch_alloc(DISPATCH_VTABLE(source),
+	ds = _dispatch_alloc(DISPATCH_VTABLE(source),
 			sizeof(struct dispatch_source_s));
 	// Initialize as a queue first, then override some settings below.
 	_dispatch_queue_init((dispatch_queue_t)ds);
@@ -123,8 +122,7 @@ dispatch_source_create(dispatch_source_type_t type,
 		type->init(ds, type, handle, mask, q);
 	}
 	if (fastpath(!ds->ds_refs)) {
-		ds->ds_refs = (struct dispatch_source_refs_s *)calloc(
-				1ul, sizeof(struct dispatch_source_refs_s));
+		ds->ds_refs = calloc(1ul, sizeof(struct dispatch_source_refs_s));
 		if (slowpath(!ds->ds_refs)) {
 			goto out_bad;
 		}
@@ -204,11 +202,8 @@ void
 dispatch_source_merge_data(dispatch_source_t ds, unsigned long val)
 {
 	struct kevent kev = {
-		.ident = 0,
-		.filter = 0,
-		.flags = 0,
 		.fflags = (typeof(kev.fflags))val,
-		.data = (intptr_t)val,
+		.data = val,
 	};
 
 	dispatch_assert(
@@ -227,7 +222,7 @@ dispatch_source_merge_data(dispatch_source_t ds, unsigned long val)
 static void
 _dispatch_source_set_event_handler2(void *context)
 {
-	struct Block_layout *bl = (struct Block_layout *)context;
+	struct Block_layout *bl = context;
 
 	dispatch_source_t ds = (dispatch_source_t)_dispatch_queue_get_current();
 	dispatch_assert(dx_type(ds) == DISPATCH_SOURCE_KEVENT_TYPE);
@@ -236,7 +231,7 @@ _dispatch_source_set_event_handler2(void *context)
 	if (ds->ds_handler_is_block && dr->ds_handler_ctxt) {
 		Block_release(dr->ds_handler_ctxt);
 	}
-	dr->ds_handler_func = bl ? (dispatch_function_t)bl->invoke : NULL;
+	dr->ds_handler_func = bl ? (void *)bl->invoke : NULL;
 	dr->ds_handler_ctxt = bl;
 	ds->ds_handler_is_block = true;
 }
@@ -246,7 +241,7 @@ dispatch_source_set_event_handler(dispatch_source_t ds,
 		dispatch_block_t handler)
 {
 	handler = _dispatch_Block_copy(handler);
-	dispatch_barrier_async_f((dispatch_queue_t)ds, (void *)handler,
+	dispatch_barrier_async_f((dispatch_queue_t)ds, handler,
 			_dispatch_source_set_event_handler2);
 }
 #endif /* __BLOCKS__ */
@@ -263,7 +258,7 @@ _dispatch_source_set_event_handler_f(void *context)
 		Block_release(dr->ds_handler_ctxt);
 	}
 #endif
-	dr->ds_handler_func = (dispatch_function_t)context;
+	dr->ds_handler_func = context;
 	dr->ds_handler_ctxt = ds->do_ctxt;
 	ds->ds_handler_is_block = false;
 }
@@ -272,7 +267,7 @@ void
 dispatch_source_set_event_handler_f(dispatch_source_t ds,
 	dispatch_function_t handler)
 {
-	dispatch_barrier_async_f((dispatch_queue_t)ds, (void *)handler,
+	dispatch_barrier_async_f((dispatch_queue_t)ds, handler,
 			_dispatch_source_set_event_handler_f);
 }
 
@@ -298,7 +293,7 @@ dispatch_source_set_cancel_handler(dispatch_source_t ds,
 	dispatch_block_t handler)
 {
 	handler = _dispatch_Block_copy(handler);
-	dispatch_barrier_async_f((dispatch_queue_t)ds, (void *)handler,
+	dispatch_barrier_async_f((dispatch_queue_t)ds, handler,
 			_dispatch_source_set_cancel_handler2);
 }
 #endif /* __BLOCKS__ */
@@ -323,7 +318,7 @@ void
 dispatch_source_set_cancel_handler_f(dispatch_source_t ds,
 	dispatch_function_t handler)
 {
-	dispatch_barrier_async_f((dispatch_queue_t)ds, (void *)handler,
+	dispatch_barrier_async_f((dispatch_queue_t)ds, handler,
 			_dispatch_source_set_cancel_handler_f);
 }
 
@@ -347,7 +342,7 @@ dispatch_source_set_registration_handler(dispatch_source_t ds,
 	dispatch_block_t handler)
 {
 	handler = _dispatch_Block_copy(handler);
-	dispatch_barrier_async_f((dispatch_queue_t)ds, (void *)handler,
+	dispatch_barrier_async_f((dispatch_queue_t)ds, handler,
 			_dispatch_source_set_registration_handler2);
 }
 #endif /* __BLOCKS__ */
@@ -372,7 +367,7 @@ void
 dispatch_source_set_registration_handler_f(dispatch_source_t ds,
 	dispatch_function_t handler)
 {
-	dispatch_barrier_async_f((dispatch_queue_t)ds, (void *)handler,
+	dispatch_barrier_async_f((dispatch_queue_t)ds, handler,
 			_dispatch_source_set_registration_handler_f);
 }
 
@@ -391,12 +386,12 @@ _dispatch_source_registration_callout(dispatch_source_t ds)
 			Block_release(dr->ds_registration_handler);
 		}
 	} else if (ds->ds_registration_is_block) {
-		dispatch_block_t b = (dispatch_block_t)dr->ds_registration_handler;
+		dispatch_block_t b = dr->ds_registration_handler;
 		_dispatch_client_callout_block(b);
 		Block_release(dr->ds_registration_handler);
 #endif
 	} else {
-		dispatch_function_t f = (dispatch_function_t)dr->ds_registration_handler;
+		dispatch_function_t f = dr->ds_registration_handler;
 		_dispatch_client_callout(ds->do_ctxt, f);
 	}
 	ds->ds_registration_is_block = false;
@@ -431,7 +426,7 @@ _dispatch_source_cancel_callout(dispatch_source_t ds)
 	}
 	if (ds->ds_cancel_is_block) {
 #ifdef __BLOCKS__
-		dispatch_block_t b = (dispatch_block_t)dr->ds_cancel_handler;
+		dispatch_block_t b = dr->ds_cancel_handler;
 		if (ds->ds_atomic_flags & DSF_CANCELED) {
 			_dispatch_client_callout_block(b);
 		}
@@ -439,7 +434,7 @@ _dispatch_source_cancel_callout(dispatch_source_t ds)
 		ds->ds_cancel_is_block = false;
 #endif
 	} else {
-		dispatch_function_t f = (dispatch_function_t)dr->ds_cancel_handler;
+		dispatch_function_t f = dr->ds_cancel_handler;
 		if (ds->ds_atomic_flags & DSF_CANCELED) {
 			_dispatch_client_callout(ds->do_ctxt, f);
 		}
@@ -662,7 +657,7 @@ _dispatch_source_merge_kevent(dispatch_source_t ds, const struct kevent *ke)
 void
 _dispatch_source_drain_kevent(struct kevent *ke)
 {
-	dispatch_kevent_t dk = (dispatch_kevent_t)ke->udata;
+	dispatch_kevent_t dk = ke->udata;
 	dispatch_source_refs_t dri;
 
 #if DISPATCH_DEBUG
@@ -692,28 +687,19 @@ _dispatch_source_drain_kevent(struct kevent *ke)
 #pragma mark dispatch_kevent_t
 
 static struct dispatch_kevent_s _dispatch_kevent_data_or = {
-	.dk_list = { NULL, NULL },
-	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_or.dk_sources),
 	.dk_kevent = {
-		.ident = 0,
 		.filter = DISPATCH_EVFILT_CUSTOM_OR,
 		.flags = EV_CLEAR,
-		.fflags = 0,
-		.data = 0,
 		.udata = &_dispatch_kevent_data_or,
 	},
+	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_or.dk_sources),
 };
 static struct dispatch_kevent_s _dispatch_kevent_data_add = {
-	.dk_list = { NULL, NULL },
-	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_add.dk_sources),
 	.dk_kevent = {
-		.ident = 0,
 		.filter = DISPATCH_EVFILT_CUSTOM_ADD,
-		.flags = 0,
-		.fflags = 0,
-		.data = 0,
 		.udata = &_dispatch_kevent_data_add,
 	},
+	.dk_sources = TAILQ_HEAD_INITIALIZER(_dispatch_kevent_data_add.dk_sources),
 };
 
 #if TARGET_OS_EMBEDDED
@@ -927,43 +913,31 @@ _dispatch_kevent_unregister(dispatch_source_t ds)
 DISPATCH_CACHELINE_ALIGN
 static struct dispatch_kevent_s _dispatch_kevent_timer[] = {
 	[DISPATCH_TIMER_INDEX_WALL] = {
-		.dk_list = { NULL, NULL },
-		.dk_sources = TAILQ_HEAD_INITIALIZER(
-				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_WALL].dk_sources),
 		.dk_kevent = {
 			.ident = DISPATCH_TIMER_INDEX_WALL,
 			.filter = DISPATCH_EVFILT_TIMER,
-			.flags = 0,
-			.fflags = 0,
-			.data = 0,
 			.udata = &_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_WALL],
 		},
+		.dk_sources = TAILQ_HEAD_INITIALIZER(
+				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_WALL].dk_sources),
 	},
 	[DISPATCH_TIMER_INDEX_MACH] = {
-		.dk_list = { NULL, NULL },
-		.dk_sources = TAILQ_HEAD_INITIALIZER(
-				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_MACH].dk_sources),
 		.dk_kevent = {
 			.ident = DISPATCH_TIMER_INDEX_MACH,
 			.filter = DISPATCH_EVFILT_TIMER,
-			.flags = 0,
-			.fflags = 0,
-			.data = 0,
 			.udata = &_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_MACH],
 		},
+		.dk_sources = TAILQ_HEAD_INITIALIZER(
+				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_MACH].dk_sources),
 	},
 	[DISPATCH_TIMER_INDEX_DISARM] = {
-		.dk_list = { NULL, NULL },
-		.dk_sources = TAILQ_HEAD_INITIALIZER(
-				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_DISARM].dk_sources),
 		.dk_kevent = {
 			.ident = DISPATCH_TIMER_INDEX_DISARM,
 			.filter = DISPATCH_EVFILT_TIMER,
-			.flags = 0,
-			.fflags = 0,
-			.data = 0,
 			.udata = &_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_DISARM],
 		},
+		.dk_sources = TAILQ_HEAD_INITIALIZER(
+				_dispatch_kevent_timer[DISPATCH_TIMER_INDEX_DISARM].dk_sources),
 	},
 };
 // Don't count disarmed timer list
@@ -1184,8 +1158,7 @@ static void
 _dispatch_source_set_timer3(void *context)
 {
 	// Called on the _dispatch_mgr_q
-	struct dispatch_set_timer_params *params = 
-			(struct dispatch_set_timer_params *)context;
+	struct dispatch_set_timer_params *params = context;
 	dispatch_source_t ds = params->ds;
 	ds->ds_ident_hack = params->ident;
 	ds_timer(ds->ds_refs) = params->values;
@@ -1202,8 +1175,7 @@ static void
 _dispatch_source_set_timer2(void *context)
 {
 	// Called on the source queue
-	struct dispatch_set_timer_params *params = 
-			(struct dispatch_set_timer_params *)context;
+	struct dispatch_set_timer_params *params = context;
 	dispatch_suspend(params->ds);
 	dispatch_barrier_async_f(&_dispatch_mgr_q, params,
 			_dispatch_source_set_timer3);
@@ -1238,8 +1210,7 @@ dispatch_source_set_timer(dispatch_source_t ds,
 		start = INT64_MAX;
 	}
 
-	while (!(params = (struct dispatch_set_timer_params *)
-	       calloc(1ul, sizeof(struct dispatch_set_timer_params)))) {
+	while (!(params = calloc(1ul, sizeof(struct dispatch_set_timer_params)))) {
 		sleep(1);
 	}
 
@@ -1585,7 +1556,7 @@ _dispatch_mach_notify_update(dispatch_kevent_t dk, uint32_t new_flags,
 static void
 _dispatch_mach_notify_source2(void *context)
 {
-	dispatch_source_t ds = (dispatch_source_t)context;
+	dispatch_source_t ds = context;
 	size_t maxsz = MAX(sizeof(union
 		__RequestUnion___dispatch_send_libdispatch_internal_protocol_subsystem),
 		sizeof(union

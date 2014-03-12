@@ -66,15 +66,6 @@ dummy_function_r0(void)
 	return 0;
 }
 
-#define DEBUG_FUNCTION(name, f) \
-	((size_t (*)(struct dispatch_##name##_s *, char *, size_t)) f)
-
-#define PROBE_FUNCTION(name, f) \
-	((bool (*)(struct dispatch_##name##_s *)) f)
-
-#define DISPOSE_FUNCTION(name, f) \
-	((void (*)(struct dispatch_##name##_s *)) f)
-
 #pragma mark -
 #pragma mark dispatch_globals
 
@@ -113,10 +104,10 @@ const struct dispatch_queue_offsets_s dispatch_queue_offsets = {
 	.dqo_label_size = sizeof(((dispatch_queue_t)NULL)->dq_label),
 	.dqo_flags = 0,
 	.dqo_flags_size = 0,
-	.dqo_serialnum = offsetof(struct dispatch_queue_s, dq_serialnum),
-	.dqo_serialnum_size = sizeof(((dispatch_queue_t)NULL)->dq_serialnum),
 	.dqo_width = offsetof(struct dispatch_queue_s, dq_width),
 	.dqo_width_size = sizeof(((dispatch_queue_t)NULL)->dq_width),
+	.dqo_serialnum = offsetof(struct dispatch_queue_s, dq_serialnum),
+	.dqo_serialnum_size = sizeof(((dispatch_queue_t)NULL)->dq_serialnum),
 	.dqo_running = offsetof(struct dispatch_queue_s, dq_running),
 	.dqo_running_size = sizeof(((dispatch_queue_t)NULL)->dq_running),
 };
@@ -126,33 +117,24 @@ const struct dispatch_queue_offsets_s dispatch_queue_offsets = {
 DISPATCH_CACHELINE_ALIGN
 struct dispatch_queue_s _dispatch_main_q = {
 	.do_vtable = DISPATCH_VTABLE(queue),
-	.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-	.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-	.do_next = NULL,
 #if !DISPATCH_USE_RESOLVERS
 	.do_targetq = &_dispatch_root_queues[
 			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_OVERCOMMIT_PRIORITY],
-#else
-	.do_targetq = NULL,
 #endif
-	.do_ctxt = NULL,
-	.do_finalizer = NULL,
+	.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
+	.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 	.do_suspend_cnt = DISPATCH_OBJECT_SUSPEND_LOCK,
+	.dq_label = "com.apple.main-thread",
 	.dq_running = 1,
 	.dq_width = 1,
-	.dq_items_tail = NULL,
-	.dq_items_head = NULL,
 	.dq_serialnum = 1,
-	.dq_specific_q = NULL,
-	 // com.apple.main-thread
-	.dq_label = {'c','o','m','.','a','p','p','l','e','.','m','a','i','n','-','t','h','r','e','a','d','\0'},
 };
 
 struct dispatch_queue_attr_s _dispatch_queue_attr_concurrent = {
 	.do_vtable = DISPATCH_VTABLE(queue_attr),
 	.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 	.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-	.do_next = (dispatch_queue_attr_t)DISPATCH_OBJECT_LISTLESS,
+	.do_next = DISPATCH_OBJECT_LISTLESS,
 };
 
 #pragma mark -
@@ -161,74 +143,62 @@ struct dispatch_queue_attr_s _dispatch_queue_attr_concurrent = {
 DISPATCH_VTABLE_INSTANCE(semaphore,
 	.do_type = DISPATCH_SEMAPHORE_TYPE,
 	.do_kind = "semaphore",
-	.do_debug = DEBUG_FUNCTION(semaphore, _dispatch_semaphore_debug),
-	.do_invoke = NULL,
-	.do_probe = NULL,
-	.do_dispose = DISPOSE_FUNCTION(semaphore, _dispatch_semaphore_dispose),
+	.do_dispose = _dispatch_semaphore_dispose,
+	.do_debug = _dispatch_semaphore_debug,
 );
 
 DISPATCH_VTABLE_INSTANCE(group,
 	.do_type = DISPATCH_GROUP_TYPE,
 	.do_kind = "group",
-	.do_debug = DEBUG_FUNCTION(group, _dispatch_semaphore_debug),
-	.do_invoke = NULL,
-	.do_probe = NULL,
-	.do_dispose = DISPOSE_FUNCTION(group, _dispatch_semaphore_dispose),
+	.do_dispose = _dispatch_semaphore_dispose,
+	.do_debug = _dispatch_semaphore_debug,
 );
 
 DISPATCH_VTABLE_INSTANCE(queue,
 	.do_type = DISPATCH_QUEUE_TYPE,
 	.do_kind = "queue",
-	.do_debug = DEBUG_FUNCTION(queue, dispatch_queue_debug),
+	.do_dispose = _dispatch_queue_dispose,
 	.do_invoke = NULL,
-	.do_probe = PROBE_FUNCTION(queue, dummy_function_r0),
-	.do_dispose = DISPOSE_FUNCTION(queue, _dispatch_queue_dispose),
+	.do_probe = (void *)dummy_function_r0,
+	.do_debug = dispatch_queue_debug,
 );
 
 DISPATCH_VTABLE_SUBCLASS_INSTANCE(queue_root, queue,
 	.do_type = DISPATCH_QUEUE_GLOBAL_TYPE,
 	.do_kind = "global-queue",
-	.do_debug = DEBUG_FUNCTION(queue, dispatch_queue_debug),
-	.do_invoke = NULL,
+	.do_debug = dispatch_queue_debug,
 	.do_probe = _dispatch_queue_probe_root,
-	.do_dispose = NULL,
 );
 
 DISPATCH_VTABLE_SUBCLASS_INSTANCE(queue_mgr, queue,
 	.do_type = DISPATCH_QUEUE_MGR_TYPE,
 	.do_kind = "mgr-queue",
-	.do_debug = DEBUG_FUNCTION(queue, dispatch_queue_debug),
 	.do_invoke = _dispatch_mgr_thread,
+	.do_debug = dispatch_queue_debug,
 	.do_probe = _dispatch_mgr_wakeup,
-	.do_dispose = NULL,
 );
 
 DISPATCH_VTABLE_INSTANCE(queue_specific_queue,
 	.do_type = DISPATCH_QUEUE_SPECIFIC_TYPE,
 	.do_kind = "queue-context",
-	.do_debug = DEBUG_FUNCTION(queue_specific_queue, dispatch_queue_debug),
+	.do_dispose = _dispatch_queue_specific_queue_dispose,
 	.do_invoke = NULL,
-	.do_probe = PROBE_FUNCTION(queue_specific_queue, dummy_function_r0),
-	.do_dispose = DISPOSE_FUNCTION(queue_specific_queue,
-	                               _dispatch_queue_specific_queue_dispose),
+	.do_probe = (void *)dummy_function_r0,
+	.do_debug = (void *)dispatch_queue_debug,
 );
 
 DISPATCH_VTABLE_INSTANCE(queue_attr,
 	.do_type = DISPATCH_QUEUE_ATTR_TYPE,
 	.do_kind = "queue-attr",
-	.do_debug = NULL,
-	.do_invoke = NULL,
-	.do_probe = NULL,
-	.do_dispose = NULL,
 );
 
 DISPATCH_VTABLE_INSTANCE(source,
 	.do_type = DISPATCH_SOURCE_KEVENT_TYPE,
 	.do_kind = "kevent-source",
-	.do_debug = _dispatch_source_debug,
 	.do_invoke = _dispatch_source_invoke,
+	.do_dispose = _dispatch_source_dispose,
 	.do_probe = _dispatch_source_probe,
-	.do_dispose = DISPOSE_FUNCTION(source, _dispatch_source_dispose),
+	.do_debug = _dispatch_source_debug,
 );
 
 #if WITH_DISPATCH_IO
@@ -236,37 +206,37 @@ DISPATCH_VTABLE_INSTANCE(source,
 DISPATCH_VTABLE_INSTANCE(data,
 	.do_type = DISPATCH_DATA_TYPE,
 	.do_kind = "data",
-	.do_debug = _dispatch_data_debug,
+	.do_dispose = _dispatch_data_dispose,
 	.do_invoke = NULL,
-	.do_probe = PROBE_FUNCTION(data, dummy_function_r0),
-	.do_dispose = DISPOSE_FUNCTION(data, _dispatch_data_dispose),
+	.do_probe = (void *)dummy_function_r0,
+	.do_debug = _dispatch_data_debug,
 );
 
 DISPATCH_VTABLE_INSTANCE(io,
 	.do_type = DISPATCH_IO_TYPE,
 	.do_kind = "channel",
-	.do_debug = DEBUG_FUNCTION(io, dummy_function_r0),
+	.do_dispose = _dispatch_io_dispose,
 	.do_invoke = NULL,
-	.do_probe = PROBE_FUNCTION(io, dummy_function_r0),
-	.do_dispose = DISPOSE_FUNCTION(io, _dispatch_io_dispose),
+	.do_probe = (void *)dummy_function_r0,
+	.do_debug = (void *)dummy_function_r0,
 );
 
 DISPATCH_VTABLE_INSTANCE(operation,
 	.do_type = DISPATCH_OPERATION_TYPE,
 	.do_kind = "operation",
-	.do_debug = DEBUG_FUNCTION(operation, dummy_function_r0),
+	.do_dispose = _dispatch_operation_dispose,
 	.do_invoke = NULL,
-	.do_probe = PROBE_FUNCTION(operation, dummy_function_r0),
-	.do_dispose = DISPOSE_FUNCTION(operation, _dispatch_operation_dispose),
+	.do_probe = (void *)dummy_function_r0,
+	.do_debug = (void *)dummy_function_r0,
 );
 
 DISPATCH_VTABLE_INSTANCE(disk,
 	.do_type = DISPATCH_DISK_TYPE,
 	.do_kind = "disk",
-	.do_debug = DEBUG_FUNCTION(disk, dummy_function_r0),
+	.do_dispose = _dispatch_disk_dispose,
 	.do_invoke = NULL,
-	.do_probe = PROBE_FUNCTION(disk, dummy_function_r0),
-	.do_dispose = DISPOSE_FUNCTION(disk, _dispatch_disk_dispose),
+	.do_probe = (void *)dummy_function_r0,
+	.do_debug = (void *)dummy_function_r0,
 );
 
 #endif  // WITH_DISPATCH_IO
@@ -490,7 +460,7 @@ _dispatch_Block_copy(dispatch_block_t db)
 void
 _dispatch_call_block_and_release(void *block)
 {
-	dispatch_block_t b = (dispatch_block_t)block;
+	void (^b)(void) = block;
 	b();
 	Block_release(b);
 }
@@ -543,7 +513,7 @@ _dispatch_client_callout2(void *ctxt, size_t i, void (*f)(void *, size_t))
 
 #if !USE_OBJC
 
-static _os_object_class_s _os_object_class;
+static const _os_object_class_s _os_object_class;
 
 void
 _os_object_init(void)
@@ -557,10 +527,10 @@ _os_object_alloc(const void *cls, size_t size)
 	_os_object_t obj;
 	dispatch_assert(size >= sizeof(struct _os_object_s));
 	if (!cls) cls = &_os_object_class;
-	while (!fastpath(obj = (_os_object_t)calloc(1u, size))) {
+	while (!fastpath(obj = calloc(1u, size))) {
 		sleep(1); // Temporary resource shortage
 	}
-	obj->os_obj_isa = (const _os_object_class_s *)cls;
+	obj->os_obj_isa = cls;
 	return obj;
 }
 
@@ -621,8 +591,7 @@ dispatch_source_type_timer_init(dispatch_source_t ds,
 	unsigned long mask,
 	dispatch_queue_t q DISPATCH_UNUSED)
 {
-	ds->ds_refs = (dispatch_source_refs_t)
-			calloc(1ul, sizeof(struct dispatch_timer_source_refs_s));
+	ds->ds_refs = calloc(1ul, sizeof(struct dispatch_timer_source_refs_s));
 	if (slowpath(!ds->ds_refs)) return;
 	ds->ds_needs_rearm = true;
 	ds->ds_is_timer = true;
@@ -631,7 +600,6 @@ dispatch_source_type_timer_init(dispatch_source_t ds,
 
 const struct dispatch_source_type_s _dispatch_source_type_timer = {
 	.ke = {
-		.ident = 0,
 		.filter = DISPATCH_EVFILT_TIMER,
 	},
 	.mask = DISPATCH_TIMER_WALL_CLOCK,
@@ -640,7 +608,6 @@ const struct dispatch_source_type_s _dispatch_source_type_timer = {
 
 const struct dispatch_source_type_s _dispatch_source_type_read = {
 	.ke = {
-		.ident = 0,
 		.filter = EVFILT_READ,
 		.flags = EV_DISPATCH,
 	},
@@ -648,7 +615,6 @@ const struct dispatch_source_type_s _dispatch_source_type_read = {
 
 const struct dispatch_source_type_s _dispatch_source_type_write = {
 	.ke = {
-		.ident = 0,
 		.filter = EVFILT_WRITE,
 		.flags = EV_DISPATCH,
 	},
@@ -712,7 +678,6 @@ const struct dispatch_source_type_s _dispatch_source_type_vm = {
 
 const struct dispatch_source_type_s _dispatch_source_type_proc = {
 	.ke = {
-		.ident = 0,
 		.filter = EVFILT_PROC,
 		.flags = EV_CLEAR,
 	},
@@ -728,14 +693,12 @@ const struct dispatch_source_type_s _dispatch_source_type_proc = {
 
 const struct dispatch_source_type_s _dispatch_source_type_signal = {
 	.ke = {
-		.ident = 0,
 		.filter = EVFILT_SIGNAL,
 	},
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_vnode = {
 	.ke = {
-		.ident = 0,
 		.filter = EVFILT_VNODE,
 		.flags = EV_CLEAR,
 	},
@@ -752,7 +715,6 @@ const struct dispatch_source_type_s _dispatch_source_type_vnode = {
 
 const struct dispatch_source_type_s _dispatch_source_type_vfs = {
 	.ke = {
-		.ident  = 0,
 		.filter = EVFILT_FS,
 		.flags = EV_CLEAR,
 	},
@@ -769,17 +731,15 @@ const struct dispatch_source_type_s _dispatch_source_type_vfs = {
 
 const struct dispatch_source_type_s _dispatch_source_type_data_add = {
 	.ke = {
-		.ident  = 0,
 		.filter = DISPATCH_EVFILT_CUSTOM_ADD,
 	},
 };
 
 const struct dispatch_source_type_s _dispatch_source_type_data_or = {
 	.ke = {
-		.ident  = 0,
 		.filter = DISPATCH_EVFILT_CUSTOM_OR,
 		.flags = EV_CLEAR,
-		.fflags = ~0u,
+		.fflags = ~0,
 	},
 };
 

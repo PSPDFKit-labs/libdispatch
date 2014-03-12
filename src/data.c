@@ -60,18 +60,18 @@ struct dispatch_data_s _dispatch_data_empty = {
 	.do_vtable = DISPATCH_VTABLE(data),
 	.do_ref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
 	.do_xref_cnt = DISPATCH_OBJECT_GLOBAL_REFCNT,
-	.do_next = (dispatch_data_t)DISPATCH_OBJECT_LISTLESS,
+	.do_next = DISPATCH_OBJECT_LISTLESS,
 };
 
 static dispatch_data_t
 _dispatch_data_init(size_t n)
 {
-	dispatch_data_t data = (dispatch_data_t)_dispatch_alloc(DISPATCH_VTABLE(data),
+	dispatch_data_t data = _dispatch_alloc(DISPATCH_VTABLE(data),
 			sizeof(struct dispatch_data_s) + n * sizeof(range_record));
 	data->num_records = n;
 	data->do_targetq = dispatch_get_global_queue(
 			DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-	data->do_next = (dispatch_data_t)DISPATCH_OBJECT_LISTLESS;
+	data->do_next = DISPATCH_OBJECT_LISTLESS;
 	return data;
 }
 
@@ -151,7 +151,7 @@ _dispatch_data_dispose(dispatch_data_t dd)
 	if (destructor == NULL) {
 		size_t i;
 		for (i = 0; i < dd->num_records; ++i) {
-			_dispatch_data_release((dispatch_data_t)dd->records[i].data_object);
+			_dispatch_data_release(dd->records[i].data_object);
 		}
 #if DISPATCH_DATA_MOVABLE
 	} else if (destructor == DISPATCH_DATA_DESTRUCTOR_UNLOCK) {
@@ -222,7 +222,7 @@ dispatch_data_create_concat(dispatch_data_t dd1, dispatch_data_t dd2)
 	}
 	size_t i;
 	for (i = 0; i < data->num_records; ++i) {
-		_dispatch_data_retain((dispatch_data_t)data->records[i].data_object);
+		_dispatch_data_retain(data->records[i].data_object);
 	}
 	return data;
 }
@@ -262,8 +262,8 @@ dispatch_data_create_subrange(dispatch_data_t dd, size_t offset,
 			record_len = bytes_left;
 		}
 		dispatch_data_t subrange = dispatch_data_create_subrange(
-				(dispatch_data_t)dd->records[i].data_object,
-				dd->records[i].from + offset, record_len);
+				dd->records[i].data_object, dd->records[i].from + offset,
+				record_len);
 		dispatch_data_t concat = dispatch_data_create_concat(data, subrange);
 		_dispatch_data_release(data);
 		_dispatch_data_release(subrange);
@@ -314,7 +314,7 @@ dispatch_data_create_map(dispatch_data_t dd, const void **buffer_ptr,
 #else
 		_dispatch_data_retain(data);
 #endif
-		buffer = (char *)dd->records[0].data_object + offset;
+		buffer = dd->records[0].data_object + offset;
 		goto out;
 	}
 	// Composite data object, copy the represented buffers
@@ -326,7 +326,7 @@ dispatch_data_create_map(dispatch_data_t dd, const void **buffer_ptr,
 	}
 	dispatch_data_apply(dd, ^(dispatch_data_t region DISPATCH_UNUSED,
 			size_t off, const void* buf, size_t len) {
-		memcpy((char *)buffer + off, buf, len);
+		memcpy(buffer + off, buf, len);
 		return (bool)true;
 	});
 	data = dispatch_data_create(buffer, size, NULL,
@@ -372,13 +372,13 @@ _dispatch_data_apply(dispatch_data_t dd, size_t offset, size_t from,
 		dd = (dispatch_data_t)(dd->records[0].data_object);
 	}
 	if (dd->leaf) {
-		buffer = (char *)dd->records[0].data_object + from;
+		buffer = dd->records[0].data_object + from;
 		return applier(data, offset, buffer, size);
 	}
 #endif
 	size_t i;
 	for (i = 0; i < dd->num_records && result; ++i) {
-		result = _dispatch_data_apply((dispatch_data_t)dd->records[i].data_object,
+		result = _dispatch_data_apply(dd->records[i].data_object,
 				offset, dd->records[i].from, dd->records[i].length,
 				applier);
 		offset += dd->records[i].length;

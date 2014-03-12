@@ -287,7 +287,7 @@ _dispatch_transform_to_utf16(dispatch_data_t data, int32_t byteOrder)
 	bool success = dispatch_data_apply(data, ^(
 			DISPATCH_UNUSED dispatch_data_t region,
 			size_t offset, const void *_buffer, size_t size) {
-		const uint8_t *src = (const uint8_t *)_buffer;
+		const uint8_t *src = _buffer;
 		size_t i;
 
 		if (offset == 0) {
@@ -326,7 +326,7 @@ _dispatch_transform_to_utf16(dispatch_data_t data, int32_t byteOrder)
 					return (bool)false;
 				}
 
-				wch = _dispatch_transform_read_utf8_sequence((const uint8_t *)p);
+				wch = _dispatch_transform_read_utf8_sequence(p);
 				skip += byte_size - (size - i);
 				src += byte_size;
 				i = size;
@@ -389,7 +389,7 @@ _dispatch_transform_from_utf16(dispatch_data_t data, int32_t byteOrder)
 	bool success = dispatch_data_apply(data, ^(
 			DISPATCH_UNUSED dispatch_data_t region, size_t offset,
 			const void *_buffer, size_t size) {
-		const uint16_t *src = (const uint16_t *)_buffer;
+		const uint16_t *src = _buffer;
 
 		if (offset == 0) {
 			// Assume first buffer will be mostly single-byte UTF-8 sequences
@@ -562,7 +562,7 @@ _dispatch_transform_from_base32(dispatch_data_t data)
 			return (bool)false;
 		}
 
-		const uint8_t *bytes = (const uint8_t *)buffer;
+		const uint8_t *bytes = buffer;
 
 		for (i = 0; i < size; i++) {
 			if (bytes[i] == '\n' || bytes[i] == '\t' || bytes[i] == ' ') {
@@ -655,7 +655,7 @@ _dispatch_transform_to_base32(dispatch_data_t data)
 	bool success = dispatch_data_apply(data, ^(
 			DISPATCH_UNUSED dispatch_data_t region,
 			size_t offset, const void *buffer, size_t size) {
-		const uint8_t *bytes = (const uint8_t *)buffer;
+		const uint8_t *bytes = buffer;
 		size_t i;
 
 		for (i = 0; i < size; i++, count++) {
@@ -775,7 +775,7 @@ _dispatch_transform_from_base64(dispatch_data_t data)
 			return (bool)false;
 		}
 
-		const uint8_t *bytes = (const uint8_t *)buffer;
+		const uint8_t *bytes = buffer;
 
 		for (i = 0; i < size; i++) {
 			if (bytes[i] == '\n' || bytes[i] == '\t' || bytes[i] == ' ') {
@@ -857,7 +857,7 @@ _dispatch_transform_to_base64(dispatch_data_t data)
 	bool success = dispatch_data_apply(data, ^(
 			DISPATCH_UNUSED dispatch_data_t region,
 			size_t offset, const void *buffer, size_t size) {
-		const uint8_t *bytes = (const uint8_t *)buffer;
+		const uint8_t *bytes = buffer;
 		size_t i;
 
 		for (i = 0; i < size; i++, count++) {

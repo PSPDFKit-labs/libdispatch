@@ -29,10 +29,10 @@
 #endif
 
 #if (!HAVE_PTHREAD_WORKQUEUES || DISPATCH_DEBUG) && \
-		!defined(DISPATCH_ENABLE_THREAD_POOL)
-#define DISPATCH_ENABLE_THREAD_POOL 1
+		!defined(DISPATCH_USE_PTHREAD_POOL)
+#define DISPATCH_USE_PTHREAD_POOL 1
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL && !DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK
+#if DISPATCH_USE_PTHREAD_POOL && !DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK
 #define pthread_workqueue_t void*
 #endif
 
@@ -60,7 +60,7 @@ static void _dispatch_worker_thread3(void *context);
 #if HAVE_PTHREAD_WORKQUEUE_SETDISPATCH_NP
 static void _dispatch_worker_thread2(int priority, int options, void *context);
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 static void *_dispatch_worker_thread(void *context);
 static int _dispatch_pthread_sigmask(int how, sigset_t *set, sigset_t *oset);
 #endif
@@ -87,7 +87,7 @@ static int main_q_eventfd = -1;
 #pragma mark -
 #pragma mark dispatch_root_queue
 
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 static struct dispatch_semaphore_s _dispatch_thread_mediator[] = {
 	[DISPATCH_ROOT_QUEUE_IDX_LOW_PRIORITY] = {
 		.do_vtable = DISPATCH_VTABLE(semaphore),
@@ -140,11 +140,11 @@ struct dispatch_root_queue_context_s {
 			unsigned int volatile dgq_pending;
 #if HAVE_PTHREAD_WORKQUEUES
 			int dgq_wq_priority, dgq_wq_options;
-#if DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK || DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK || DISPATCH_USE_PTHREAD_POOL
 			pthread_workqueue_t dgq_kworkqueue;
 #endif
 #endif // HAVE_PTHREAD_WORKQUEUES
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 			dispatch_semaphore_t dgq_thread_mediator;
 			uint32_t dgq_thread_pool_size;
 #endif
@@ -160,7 +160,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 		.dgq_wq_priority = DISPATCH_WORKQ_LOW_PRIOQUEUE,
 		.dgq_wq_options = 0,
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
 				DISPATCH_ROOT_QUEUE_IDX_LOW_PRIORITY],
 		.dgq_thread_pool_size = MAX_THREAD_COUNT,
@@ -171,7 +171,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 		.dgq_wq_priority = DISPATCH_WORKQ_LOW_PRIOQUEUE,
 		.dgq_wq_options = DISPATCH_WORKQ_OPTION_OVERCOMMIT,
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
 				DISPATCH_ROOT_QUEUE_IDX_LOW_OVERCOMMIT_PRIORITY],
 		.dgq_thread_pool_size = MAX_THREAD_COUNT,
@@ -182,7 +182,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 		.dgq_wq_priority = DISPATCH_WORKQ_DEFAULT_PRIOQUEUE,
 		.dgq_wq_options = 0,
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
 				DISPATCH_ROOT_QUEUE_IDX_DEFAULT_PRIORITY],
 		.dgq_thread_pool_size = MAX_THREAD_COUNT,
@@ -193,7 +193,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 		.dgq_wq_priority = DISPATCH_WORKQ_DEFAULT_PRIOQUEUE,
 		.dgq_wq_options = DISPATCH_WORKQ_OPTION_OVERCOMMIT,
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
 				DISPATCH_ROOT_QUEUE_IDX_DEFAULT_OVERCOMMIT_PRIORITY],
 		.dgq_thread_pool_size = MAX_THREAD_COUNT,
@@ -204,7 +204,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 		.dgq_wq_priority = DISPATCH_WORKQ_HIGH_PRIOQUEUE,
 		.dgq_wq_options = 0,
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
 				DISPATCH_ROOT_QUEUE_IDX_HIGH_PRIORITY],
 		.dgq_thread_pool_size = MAX_THREAD_COUNT,
@@ -215,7 +215,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 		.dgq_wq_priority = DISPATCH_WORKQ_HIGH_PRIOQUEUE,
 		.dgq_wq_options = DISPATCH_WORKQ_OPTION_OVERCOMMIT,
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
 				DISPATCH_ROOT_QUEUE_IDX_HIGH_OVERCOMMIT_PRIORITY],
 		.dgq_thread_pool_size = MAX_THREAD_COUNT,
@@ -226,7 +226,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 		.dgq_wq_priority = DISPATCH_WORKQ_BG_PRIOQUEUE,
 		.dgq_wq_options = 0,
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
 				DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_PRIORITY],
 		.dgq_thread_pool_size = MAX_THREAD_COUNT,
@@ -237,7 +237,7 @@ static struct dispatch_root_queue_context_s _dispatch_root_queue_contexts[] = {
 		.dgq_wq_priority = DISPATCH_WORKQ_BG_PRIOQUEUE,
 		.dgq_wq_options = DISPATCH_WORKQ_OPTION_OVERCOMMIT,
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 		.dgq_thread_mediator = &_dispatch_thread_mediator[
 				DISPATCH_ROOT_QUEUE_IDX_BACKGROUND_OVERCOMMIT_PRIORITY],
 		.dgq_thread_pool_size = MAX_THREAD_COUNT,
@@ -423,7 +423,7 @@ _dispatch_root_queues_init_workq(void)
 	bool result = false;
 #if HAVE_PTHREAD_WORKQUEUES
 	bool disable_wq = false;
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 	disable_wq = slowpath(getenv("LIBDISPATCH_DISABLE_KWQ"));
 #endif
 	int r;
@@ -436,7 +436,7 @@ _dispatch_root_queues_init_workq(void)
 		result = !r;
 	}
 #endif // HAVE_PTHREAD_WORKQUEUE_SETDISPATCH_NP
-#if DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK || DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK || DISPATCH_USE_PTHREAD_POOL
 	if (!result) {
 #if DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK
 		pthread_workqueue_attr_t pwq_attr;
@@ -475,7 +475,7 @@ _dispatch_root_queues_init_workq(void)
 		}
 #endif
 	}
-#endif // DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK || DISPATCH_ENABLE_THREAD_POOL
+#endif // DISPATCH_USE_LEGACY_WORKQUEUE_FALLBACK || DISPATCH_USE_PTHREAD_POOL
 #endif // HAVE_PTHREAD_WORKQUEUES
 	return result;
 }
@@ -483,7 +483,7 @@ _dispatch_root_queues_init_workq(void)
 static inline void
 _dispatch_root_queues_init_thread_pool(void)
 {
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 	int i;
 	for (i = 0; i < DISPATCH_ROOT_QUEUE_COUNT; i++) {
 #if TARGET_OS_EMBEDDED
@@ -510,7 +510,7 @@ _dispatch_root_queues_init_thread_pool(void)
 	}
 #else
 	DISPATCH_CRASH("Thread pool creation failed");
-#endif // DISPATCH_ENABLE_THREAD_POOL
+#endif // DISPATCH_USE_PTHREAD_POOL
 }
 
 static void
@@ -543,7 +543,7 @@ libdispatch_init(void)
 			sizeof(_dispatch_wq2root_queues[0][0]) ==
 			DISPATCH_ROOT_QUEUE_COUNT);
 #endif
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 	dispatch_assert(countof(_dispatch_thread_mediator) ==
 			DISPATCH_ROOT_QUEUE_COUNT);
 #endif
@@ -2006,7 +2006,7 @@ _dispatch_queue_wakeup_global_slow(dispatch_queue_t dq, unsigned int n)
 	dispatch_once_f(&pred, NULL, _dispatch_root_queues_init);
 
 #if HAVE_PTHREAD_WORKQUEUES
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 	if (qc->dgq_kworkqueue != (void*)(~0ul))
 #endif
 	{
@@ -2031,7 +2031,7 @@ _dispatch_queue_wakeup_global_slow(dispatch_queue_t dq, unsigned int n)
 		return;
 	}
 #endif // HAVE_PTHREAD_WORKQUEUES
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 	if (dispatch_semaphore_signal(qc->dgq_thread_mediator)) {
 		return;
 	}
@@ -2055,7 +2055,7 @@ _dispatch_queue_wakeup_global_slow(dispatch_queue_t dq, unsigned int n)
 	}
 	r = pthread_detach(pthr);
 	(void)dispatch_assume_zero(r);
-#endif // DISPATCH_ENABLE_THREAD_POOL
+#endif // DISPATCH_USE_PTHREAD_POOL
 }
 
 static inline void
@@ -2068,7 +2068,7 @@ _dispatch_queue_wakeup_global2(dispatch_queue_t dq, unsigned int n)
 	}
 #if HAVE_PTHREAD_WORKQUEUES
 	if (
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 			(qc->dgq_kworkqueue != (void*)(~0ul)) &&
 #endif
 			!dispatch_atomic_cmpxchg2o(qc, dgq_pending, 0, n)) {
@@ -2465,7 +2465,7 @@ _dispatch_worker_thread2(int priority, int options,
 }
 #endif
 
-#if DISPATCH_ENABLE_THREAD_POOL
+#if DISPATCH_USE_PTHREAD_POOL
 // 6618342 Contact the team that owns the Instrument DTrace probe before
 //         renaming this symbol
 static void *

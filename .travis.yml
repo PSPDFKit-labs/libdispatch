@@ -1,0 +1,12 @@
+language: c
+compiler:
+    - clang
+install:
+    - sudo apt-get install libblocksruntime-dev libkqueue-dev libpthread-workqueue-dev
+script:
+    - mkdir build
+    - cd build
+    - cmake .. -DCMAKE_BUILD_TYPE=Release
+    - make
+    - make check
+# env:

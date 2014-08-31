@@ -2,8 +2,11 @@
 #cmakedefine01 HAVE_ASPRINTF
 
 /* Define to 1 if you have the <CoreFoundation/CoreFoundation.h> header file.
-   */
+ */
 #cmakedefine01 HAVE_COREFOUNDATION_COREFOUNDATION_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine01 HAVE_UNISTD_H
 
 /* Define to 1 if you have the declaration of `CLOCK_MONOTONIC', and to 0 if
    you don't. */
@@ -138,3 +141,8 @@
 
 /* Define to use POSIX semaphores */
 #cmakedefine01 USE_POSIX_SEM
+
+/* Define if unistd.h needs special handling to compile using -fblocks; see
+   https://bugzilla.redhat.com/show_bug.cgi?id=1009623 */
+#cmakedefine01 HAS_PROBLEMATIC_UNISTD_H
+

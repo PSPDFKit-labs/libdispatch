@@ -241,7 +241,19 @@ else ()
   message(FATAL_ERROR "no supported semaphore type")
 endif ()
 
-DSCheckHeaders(sys/cdefs.h)
+DSCheckHeaders(sys/cdefs.h unistd.h)
+
+if (HAVE_UNISTD_H AND CBLOCKS_COMPILER_SUPPORT_FOUND)
+    cmake_push_check_state()
+        set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+        set(CMAKE_REQUIRED_FLAGS -fblocks)
+        check_c_source_compiles("#include <unistd.h>\nint main(){}"
+            HAS_WORKING_UNISTD_H)
+    cmake_pop_check_state()
+    if (NOT HAS_WORKING_UNISTD_H)
+        set (HAS_PROBLEMATIC_UNISTD_H 1)
+    endif ()
+endif ()
 
 check_c_compiler_flag("-fvisibility=hidden" SUPPORTS_FVISIBILITY_HIDDEN)
 if (SUPPORTS_FVISIBILITY_HIDDEN)
@@ -275,6 +287,8 @@ configure_file("config/config.h.cmake.in"
 )
 
 ################################################################################
+
+include_directories(SYSTEM fixincludes)
 
 add_subdirectory(src)
 add_subdirectory(testing)

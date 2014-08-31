@@ -1,6 +1,6 @@
 
 set (public_headers
-  object.h
+    object.h
 )
 
-install(FILES ${public_headers} DESTINATION "${DISPATCH_INCLUDE_DIR}/os")
+install(FILES ${public_headers} DESTINATION include/os)

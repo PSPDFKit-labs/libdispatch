@@ -2,9 +2,8 @@ language: cpp
 matrix:
     include:
         - compiler: clang
-          env: CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=Release -GNinja"
+          env: CMAKE_FLAGS="-GNinja -DDISPATCH_ENABLE_TEST_SUITE=1"
         - compiler: gcc
-          env: CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=Release"
 cache: apt
 before_install:
     - sudo apt-get update -qq

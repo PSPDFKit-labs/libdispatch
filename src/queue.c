@@ -538,7 +538,7 @@ libdispatch_init(void)
 			DISPATCH_ROOT_QUEUE_COUNT);
 	dispatch_assert(countof(_dispatch_root_queue_contexts) ==
 			DISPATCH_ROOT_QUEUE_COUNT);
-#if HAVE_PTHREAD_WORKQUEUES
+#if HAVE_PTHREAD_WORKQUEUE_SETDISPATCH_NP
 	dispatch_assert(sizeof(_dispatch_wq2root_queues) /
 			sizeof(_dispatch_wq2root_queues[0][0]) ==
 			DISPATCH_ROOT_QUEUE_COUNT);

@@ -50,6 +50,7 @@ _dispatch_monotonic_time()
 	struct timespec ts;
 	int status = clock_gettime(clockID, &ts);
 	assert(0 == status);
+	(void)status;
 	return (uint64_t)ts.tv_nsec + NSEC_PER_SEC * ts.tv_sec;
 #endif
 }

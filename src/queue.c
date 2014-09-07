@@ -81,6 +81,8 @@ static void _dispatch_main_q_port_init(void *ctxt);
 #if DISPATCH_LINUX_COMPAT
 static dispatch_once_t _dispatch_main_q_eventfd_pred;
 static void _dispatch_main_q_eventfd_init(void *ctxt);
+static void _dispatch_eventfd_write(int fd, uint64_t value);
+static uint64_t _dispatch_eventfd_read(int fd);
 static int main_q_eventfd = -1;
 #endif
 
@@ -1983,11 +1985,7 @@ _dispatch_queue_wakeup_main(void)
 	dispatch_once_f(&_dispatch_main_q_eventfd_pred, NULL,
 			_dispatch_main_q_eventfd_init);
 	if (main_q_eventfd != -1) {
-		int result;
-		do {
-			result = eventfd_write(main_q_eventfd, 1);
-		} while (result == -1 && errno == EINTR);
-		(void)dispatch_assume_zero(result);
+		_dispatch_eventfd_write(main_q_eventfd, 1);
 	}
 #endif
 	return NULL;
@@ -2240,6 +2238,9 @@ _dispatch_main_queue_drain(void)
 	if (!dq->dq_items_tail) {
 		return;
 	}
+#if DISPATCH_LINUX_COMPAT
+	(void)_dispatch_eventfd_read(main_q_eventfd);
+#endif
 	struct dispatch_main_queue_drain_marker_s {
 		DISPATCH_CONTINUATION_HEADER(main_queue_drain_marker);
 	} marker = {
@@ -2586,7 +2587,7 @@ _dispatch_main_queue_callback_4CF(mach_msg_header_t *msg DISPATCH_UNUSED)
 
 #if DISPATCH_LINUX_COMPAT
 int
-dispatch_get_main_queue_eventfd_np()
+dispatch_get_main_queue_handle_np()
 {
 	dispatch_once_f(&_dispatch_main_q_eventfd_pred, NULL,
 		_dispatch_main_q_eventfd_init);
@@ -2607,6 +2608,30 @@ dispatch_main_queue_drain_np()
 	_dispatch_queue_set_mainq_drain_state(true);
 	_dispatch_main_queue_drain();
 	_dispatch_queue_set_mainq_drain_state(false);
+}
+
+static void
+_dispatch_eventfd_write(int fd, uint64_t value)
+{
+	ssize_t result;
+	do {
+		result = write(fd, &value, sizeof(value));
+	} while (result == -1 && errno == EINTR);
+	dispatch_assert(result == sizeof(value) ||
+					(result == -1 && errno == EAGAIN));
+}
+
+static uint64_t
+_dispatch_eventfd_read(int fd)
+{
+	uint64_t value = 0;
+	ssize_t result;
+	do {
+		result = read(fd, &value, sizeof(value));
+	} while (result == -1 && errno == EINTR);
+	dispatch_assert(result == sizeof(value) ||
+					(result == -1 && errno == EAGAIN));
+	return value;
 }
 
 static

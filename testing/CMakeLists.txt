@@ -103,9 +103,5 @@ dispatch_test( dispatch_io_net )
 dispatch_test( dispatch_vm )
 dispatch_test( dispatch_vnode )
 dispatch_test( dispatch_select )
-
-if (HAVE_MACH)
-    dispatch_test( dispatch_deadname )
-endif ()
-
+dispatch_test( dispatch_main_queue )
 

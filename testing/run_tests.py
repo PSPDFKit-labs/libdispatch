@@ -28,6 +28,7 @@ TESTS = [
     Test('debug',           'default'),
     Test('io',              'default'),
     Test('io_net',          'default'),
+    Test('main_queue',      'default'),
     Test('overcommit',      'default'),
     Test('pingpong',        'default'),
     Test('plusplus',        'default'),

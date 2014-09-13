@@ -14,9 +14,9 @@ I've also added missing `_f` variants for several functions in `data.h` and `io.
 
 Prerequisities
 --------------
-- [libBlocksRuntime](http://mark.heily.com/project/libblocksruntime)
-- [libpthread_workqueue](http://mark.heily.com/project/libpthread_workqueue)
-- [libkqueue](http://mark.heily.com/project/libkqueue)
+- [libBlocksRuntime](https://github.com/mheily/blocks-runtime)
+- [libpthread_workqueue](https://github.com/mheily/libpwq)
+- [libkqueue](https://github.com/mheily/libkqueue)
 - [Clang](http://llvm.org)
 - [CMake](http://cmake.org)
 

@@ -31,6 +31,8 @@ The following does the job on Ubuntu 12.10:
     make
     sudo make install
 
+[![Build Status](https://travis-ci.org/nickhutchinson/libdispatch.svg?branch=master)](https://travis-ci.org/nickhutchinson/libdispatch)
+
 Testing
 -------
 The included test suite builds and runs on Linux (just run `make check`). Last I checked, a few tests failed:

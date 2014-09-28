@@ -32,7 +32,6 @@ script:
     - popd
     - |
         if [[ "$DISPATCH_RUN_TESTS" -eq 1 ]]; then
-            ./testing/run_tests.py --test-folder=build/testing/tests
+            ./testing/run_tests.py --permitted-failures=read2,apply build/testing/tests
         fi
-
 

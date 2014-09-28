@@ -1,10 +1,7 @@
 
-if (NOT CBLOCKS_COMPILER_SUPPORT_FOUND)
+if (NOT DISPATCH_ENABLE_TEST_SUITE)
   return ()
 endif ()
-
-
-set_property(DIRECTORY PROPERTY EXCLUDE_FROM_ALL 1)
 
 add_library(bsdtests OBJECT
   bsdtests.c

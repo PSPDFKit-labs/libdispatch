@@ -8,6 +8,8 @@ if (NOT COMPILER_HAS_BLOCKS_SUPPORT)
 endif ()
 #///////////////////////////////////////////////////////////////////////////////
 
+set_property(DIRECTORY PROPERTY EXCLUDE_FROM_ALL YES)
+
 execute_process(
     # Give the test suite access to dispatch's private headers.
     COMMAND ln -sf "${dispatch_SOURCE_DIR}/private" "dispatch"

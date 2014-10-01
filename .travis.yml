@@ -2,28 +2,20 @@ language: cpp
 matrix:
     include:
         - compiler: clang
-          env: CONFIGURE_FLAGS=-GNinja DISPATCH_RUN_TESTS=1
+          env: DISPATCH_RUN_TESTS=1
         - compiler: gcc
 cache: apt
 before_install:
     - sudo apt-get update -qq
-    - mkdir -p downloads
-    - wget -P downloads
-            http://howlingfantods.s3.amazonaws.com/packages/cmake_3.0.1_amd64.deb
-    - wget -P downloads
-            http://howlingfantods.s3.amazonaws.com/packages/ninja_1.5.1_amd64.deb
 install:
     - sudo apt-get install -qq
             libblocksruntime-dev
             libkqueue-dev
             libpthread-workqueue-dev
-            gdebi-core
             wbritish
-    - sudo gdebi -n downloads/cmake_3.0.1_amd64.deb
-    - sudo gdebi -n downloads/ninja_1.5.1_amd64.deb
 script:
     - mkdir build && cd build
-    - ../configure $CONFIGURE_FLAGS
+    - ../configure
     - make
     - sudo make install
     - |

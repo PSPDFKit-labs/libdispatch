@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 2.8.7)
 
 project (dispatch)
 set (dispatch_VERSION "0.1dev")
@@ -13,11 +13,6 @@ include (CMakePushCheckState)
 #///////////////////////////////////////////////////////////////////////////////
 if (NOT CMAKE_BUILD_TYPE)
     set (CMAKE_BUILD_TYPE MinSizeRel)
-endif ()
-
-if (CMAKE_C_COMPILER_ID MATCHES GNU
-        AND CMAKE_C_COMPILER_VERSION VERSION_LESS 4.2)
-    message(FATAL_ERROR "libdispatch requires GCC 4.2 or later")
 endif ()
 
 #///////////////////////////////////////////////////////////////////////////////

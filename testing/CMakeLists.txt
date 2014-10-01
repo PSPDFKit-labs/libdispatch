@@ -10,11 +10,10 @@ endif ()
 
 execute_process(
     # Give the test suite access to dispatch's private headers.
-    COMMAND ${CMAKE_COMMAND} -E
-        create_symlink "${dispatch_SOURCE_DIR}/private" "dispatch"
+    COMMAND ln -sf "${dispatch_SOURCE_DIR}/private" "dispatch"
 )
 
-add_library(bsdtests OBJECT
+add_library(bsdtests SHARED
     bsdtests.c
     bsdtests.h
     dispatch_test.c
@@ -35,7 +34,7 @@ function (dispatch_test test_name)
         set (sources "${test_name}")
     endif ()
 
-    add_executable("${test_name}" ${sources} $<TARGET_OBJECTS:bsdtests>)
+    add_executable("${test_name}" ${sources})
     add_dependencies(test "${test_name}")
 endfunction ()
 
@@ -46,11 +45,7 @@ add_definitions(
     -fblocks
 )
 
-# Sometimes we need to link additional libraries for maths functions
-dispatch_search_libs(sin LIBRARIES m REQUIRED)
-set (MATH_LIBRARIES "${SIN_LIBRARIES}")
-
-link_libraries(libdispatch_shared ${MATH_LIBRARIES})
+link_libraries(libdispatch_shared m bsdtests)
 
 include_directories(
     ${dispatch_BINARY_DIR}
@@ -65,8 +60,8 @@ include_directories(SYSTEM
     ${BLOCKS_RUNTIME_INCLUDE_DIRS}
 )
 
-add_executable(bsdtestharness bsdtestharness.c $<TARGET_OBJECTS:bsdtests>)
-add_executable(bsdtestsummarize bsdtestsummarize.c $<TARGET_OBJECTS:bsdtests>)
+add_executable(bsdtestharness bsdtestharness.c)
+add_executable(bsdtestsummarize bsdtestsummarize.c)
 add_dependencies(test bsdtestharness bsdtestsummarize)
 
 dispatch_test( dispatch_apply )

@@ -1,16 +1,19 @@
 #!/usr/bin/env python2
 # encoding: utf-8
 
-import click
 import os
 import random
 import subprocess
 import sys
-import textwrap
 import time
 from collections import namedtuple
 from itertools import compress, imap, ifilter
 
+HERE = os.path.dirname(__file__)
+THIRD_PARTY = os.path.join(HERE, '../thirdparty')
+sys.path.insert(1, os.path.join(THIRD_PARTY, 'click'))
+import click
+del sys.path[1]
 
 Test = namedtuple("Test", "name group")
 
@@ -139,6 +142,9 @@ def cli(test_groups, tests, permitted_failures, test_folder, random_seed):
 
     results = dict(successes=[], permitted_failures=[], failures=[])
 
+    if random_seed:
+        click.echo("Using random seed: {0}".format(random_seed))
+
     for test in tests_to_run:
         click.secho("==== {0} ====".format(test.name), fg='blue')
         start = time.time()
@@ -158,8 +164,6 @@ def cli(test_groups, tests, permitted_failures, test_folder, random_seed):
         click.echo("{} ({:.1f}s)".format(test.name, elapsed))
         click.echo()
 
-    wrapper = textwrap.TextWrapper()
-
     click.echo("==================================================")
     click.echo("                    SUMMARY                       ")
     click.echo("==================================================")
@@ -169,7 +173,7 @@ def cli(test_groups, tests, permitted_failures, test_folder, random_seed):
         click.echo("{RESULT}: {num}\n{tests}".format(
                 RESULT=click.style(kind, fg=colour, bold=True),
                 num=len(results),
-                tests=wrapper.fill(", ".join(sorted(results)))))
+                tests=click.wrap_text(", ".join(sorted(results)))))
         if results:
             click.echo()
 

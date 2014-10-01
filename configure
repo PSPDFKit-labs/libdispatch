@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+import errno
+import pipes
+import os
+import sys
+import subprocess
+
+HERE = os.path.dirname(__file__)
+SOURCE_TREE = HERE
+THIRD_PARTY = os.path.join(HERE, 'thirdparty')
+
+sys.path.insert(1, os.path.join(THIRD_PARTY, 'click'))
+import click
+del sys.path[1]
+
+
+def shelljoin(args):
+    return " ".join(pipes.quote(arg) for arg in args)
+
+
+@click.command()
+@click.pass_context
+@click.option('--prefix', type=click.Path(), show_default=True,
+              default='/usr/local')
+@click.option('--release', 'build_type', flag_value='Release')
+@click.option('--debug', 'build_type', flag_value='Debug')
+@click.option('--build-type', type=click.Choice(["Debug", "Release"]),
+              show_default=True, default='Release')
+@click.option('-G', '--cmake-generator', default="Unix Makefiles",
+              show_default=True,
+              help='The CMake build system generator to use.')
+@click.option('--cmake', '--cmake-executable', default='cmake',
+              type=click.Path(), show_default=True)
+@click.option('-n', '--dry-run', help="Don't actually invoke CMake.",
+              is_flag=True)
+@click.option('--developer', '--dev', 'developer_mode', is_flag=True,
+              help="Enable developer mode.", show_default=False)
+@click.argument('extra-cmake-args', nargs=-1)
+def configure(
+        ctx,
+        prefix,
+        build_type,
+        cmake_generator,
+        cmake_executable,
+        dry_run,
+        developer_mode,
+        extra_cmake_args):
+    """Script for configuring libdispatch's build."""
+    command_line = []
+    command_line.extend([cmake_executable,
+                         SOURCE_TREE,
+                         '-DCMAKE_BUILD_TYPE={0}'.format(build_type),
+                         '-G{0}'.format(cmake_generator)])
+
+    command_line.append('-DCMAKE_INSTALL_PREFIX={0}'.format(prefix))
+
+    if developer_mode:
+        command_line.extend(['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
+                             '--warn-uninitialized',
+                             '-Wdev', ])
+
+    command_line.extend(extra_cmake_args)
+
+    click.secho("Invoking CMake:", fg='blue', bold=True, err=True)
+    click.echo(shelljoin(command_line), err=True)
+
+    if not dry_run:
+        try:
+            ctx.exit(subprocess.call(command_line))
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                ctx.fail("No such executable '%s'" % cmake_executable)
+            else:
+                ctx.fail("Could no launch executable '%s'" % cmake_executable)
+
+
+if __name__ == '__main__':
+    configure()
+

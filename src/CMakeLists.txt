@@ -13,9 +13,7 @@ set (sources
 if (COMPILER_HAS_BLOCKS_SUPPORT)
     list (APPEND sources
         data.c
-        data_additions.c
         io.c
-        io_additions.c
         transform.c
     )
     add_definitions (-fblocks)

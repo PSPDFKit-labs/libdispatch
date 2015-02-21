@@ -386,6 +386,33 @@ _dispatch_data_apply(dispatch_data_t dd, size_t offset, size_t from,
 	return result;
 }
 
+dispatch_data_t
+dispatch_data_create_f_np(const void *buffer, size_t size,
+		dispatch_queue_t queue, dispatch_function_t destructor_function)
+{
+	dispatch_block_t destructor = (dispatch_block_t)destructor_function;
+	if (destructor != DISPATCH_DATA_DESTRUCTOR_DEFAULT &&
+			destructor != DISPATCH_DATA_DESTRUCTOR_FREE &&
+			destructor != DISPATCH_DATA_DESTRUCTOR_NONE) {
+		destructor = ^{ destructor_function((void*)buffer); };
+	}
+	return dispatch_data_create(buffer, size, queue, destructor);
+}
+
+bool
+dispatch_data_apply_f_np(dispatch_data_t dd, void *ctxt,
+		dispatch_data_applier_function_t applier)
+{
+	if (!dd->size) {
+		return true;
+	}
+	return _dispatch_data_apply(dd, 0, 0, dd->size,
+								^(dispatch_data_t region, size_t offset,
+								  const void * buffer, size_t size) {
+		return applier(ctxt, region, offset, buffer, size);
+	});
+}
+
 bool
 dispatch_data_apply(dispatch_data_t dd, dispatch_data_applier_t applier)
 {

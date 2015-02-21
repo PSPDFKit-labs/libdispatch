@@ -466,7 +466,7 @@ extern struct _dispatch_hw_config_s {
 #endif // F_SETNOSIGPIPE
 
 #ifndef PAGE_SIZE
-#define PAGE_SIZE sysconf(_SC_PAGESIZE)
+#define PAGE_SIZE (1ul << 12)
 #endif
 
 #if __APPLE__

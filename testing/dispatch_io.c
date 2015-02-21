@@ -77,11 +77,11 @@ test_fin(void *cxt)
 #else
 #define LARGE_FILE "/System/Library/Speech/Voices/Alex.SpeechVoice/Contents/Resources/PCMWave" // 417MB file
 
-static int
+static uint64_t
 _maxopenfiles()
 {
 	static dispatch_once_t oncePred;
-	static int count;
+	static uint64_t count;
 	dispatch_once(&oncePred, ^{
 		struct rlimit lim;
 		getrlimit(RLIMIT_NOFILE, &lim);

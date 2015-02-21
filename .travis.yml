@@ -15,12 +15,11 @@ install:
             wbritish
 script:
     - mkdir build && cd build
-    - ../configure
+    - ../configure --enable-test-suite
     - make
     - sudo make install
     - |
         if [[ "$DISPATCH_RUN_TESTS" -eq 1 ]]; then
-            make test
             ../testing/run_tests.py --permitted-failures=priority2,read2,apply --random-seed=$RANDOM testing
         fi
 

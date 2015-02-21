@@ -1,5 +1,12 @@
+# testing/CMakeLists.txt
+################################################################################
+
+if (NOT DISPATCH_ENABLE_TEST_SUITE)
+    return ()
+endif ()
+
 # Aggregate target that collects all the test executables.
-add_custom_target(test)
+add_custom_target(tests)
 
 if (NOT COMPILER_HAS_BLOCKS_SUPPORT)
     message(WARNING
@@ -8,11 +15,11 @@ if (NOT COMPILER_HAS_BLOCKS_SUPPORT)
 endif ()
 #///////////////////////////////////////////////////////////////////////////////
 
-set_property(DIRECTORY PROPERTY EXCLUDE_FROM_ALL YES)
-
 execute_process(
     # Give the test suite access to dispatch's private headers.
-    COMMAND ln -sf "${dispatch_SOURCE_DIR}/private" "dispatch"
+    COMMAND "${CMAKE_COMMAND}" -E create_symlink
+        "${dispatch_SOURCE_DIR}/private"
+        "${CMAKE_CURRENT_BINARY_DIR}/dispatch"
 )
 
 add_library(bsdtests SHARED
@@ -37,7 +44,7 @@ function (dispatch_test test_name)
     endif ()
 
     add_executable("${test_name}" ${sources})
-    add_dependencies(test "${test_name}")
+    add_dependencies(tests "${test_name}")
 endfunction ()
 
 add_definitions(
@@ -64,7 +71,7 @@ include_directories(SYSTEM
 
 add_executable(bsdtestharness bsdtestharness.c)
 add_executable(bsdtestsummarize bsdtestsummarize.c)
-add_dependencies(test bsdtestharness bsdtestsummarize)
+add_dependencies(tests bsdtestharness bsdtestsummarize)
 
 dispatch_test( dispatch_apply )
 dispatch_test( dispatch_api )

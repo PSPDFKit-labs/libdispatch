@@ -46,10 +46,12 @@ main(void)
 		test_stop();
 	}
 	close(fd1);
-	if (!mktemp(path2)) {
-		test_errno("mktemp", errno, 0);
+	int fd2 = mkstemp(path2);
+	if (fd2 == -1) {
+		test_errno("mkstemp", errno, 0);
 		test_stop();
 	}
+	close(fd2);
 	char *currentName = path1;
 	char *renameDest = path2;
 	dispatch_semaphore_t renamedSemaphore = dispatch_semaphore_create(0);

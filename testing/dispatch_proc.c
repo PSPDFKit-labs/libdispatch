@@ -108,7 +108,7 @@ test_proc(pid_t bad_pid)
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 5*NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 		int status;
 		int res2 = waitpid(pid, &status, 0);
-		assert(res2 != -1);
+		test_long_greater_than_or_equal("waitpid", res2, 0);
 		//int passed = (WIFEXITED(status) && WEXITSTATUS(status) == 0);
 		test_long("Sub-process exited", WEXITSTATUS(status) | WTERMSIG(status), 0);
 		test_long("Event count", event_cnt, PID_CNT);

@@ -28,6 +28,7 @@ def shelljoin(args):
               envvar='CC', help='The C compiler to use')
 @click.option('--c++', 'cxx_compiler', default='clang++', metavar='COMPILER',
               envvar='CXX', help='The C++ compiler to use')
+@click.option('--enable-test-suite/--disable-test-suite', default=False)
 @click.option('--release', 'build_type', flag_value='Release')
 @click.option('--debug', 'build_type', flag_value='Debug')
 @click.option('--build-type', type=click.Choice(["Debug", "Release"]),
@@ -46,6 +47,7 @@ def configure(
         build_type,
         c_compiler,
         cxx_compiler,
+        enable_test_suite,
         cmake_generator,
         cmake_executable,
         dry_run,
@@ -60,6 +62,8 @@ def configure(
     command_line.append('-DCMAKE_INSTALL_PREFIX={0}'.format(prefix))
     command_line.append('-DCMAKE_C_COMPILER={0}'.format(c_compiler))
     command_line.append('-DCMAKE_CXX_COMPILER={0}'.format(cxx_compiler))
+    command_line.append(
+        '-DDISPATCH_ENABLE_TEST_SUITE={0}'.format(int(enable_test_suite)))
 
     command_line.append('--no-warn-unused-cli')
     command_line.append('--warn-uninitialized')

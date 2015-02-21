@@ -912,7 +912,7 @@ typedef int dispatch_queue_handle_t;
  */
 DISPATCH_EXPORT DISPATCH_WARN_RESULT DISPATCH_NOTHROW
 dispatch_queue_handle_t
-dispatch_get_main_queue_handle_np();
+dispatch_get_main_queue_handle_np(void);
 
 /*!
  * @function dispatch_main_queue_drain_np
@@ -929,7 +929,7 @@ dispatch_get_main_queue_handle_np();
  */
 DISPATCH_EXPORT DISPATCH_NOTHROW
 void
-dispatch_main_queue_drain_np();
+dispatch_main_queue_drain_np(void);
 #endif
 
 __END_DECLS

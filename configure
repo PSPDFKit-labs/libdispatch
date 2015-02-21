@@ -24,6 +24,10 @@ def shelljoin(args):
 @click.pass_context
 @click.option('--prefix', type=click.Path(), show_default=True,
               default='/usr/local')
+@click.option('--cc', 'c_compiler', default='clang', metavar='COMPILER',
+              envvar='CC', help='The C compiler to use')
+@click.option('--c++', 'cxx_compiler', default='clang++', metavar='COMPILER',
+              envvar='CXX', help='The C++ compiler to use')
 @click.option('--release', 'build_type', flag_value='Release')
 @click.option('--debug', 'build_type', flag_value='Debug')
 @click.option('--build-type', type=click.Choice(["Debug", "Release"]),
@@ -35,17 +39,16 @@ def shelljoin(args):
               type=click.Path(), show_default=True)
 @click.option('-n', '--dry-run', help="Don't actually invoke CMake.",
               is_flag=True)
-@click.option('--developer', '--dev', 'developer_mode', is_flag=True,
-              help="Enable developer mode.", show_default=False)
 @click.argument('extra-cmake-args', nargs=-1)
 def configure(
         ctx,
         prefix,
         build_type,
+        c_compiler,
+        cxx_compiler,
         cmake_generator,
         cmake_executable,
         dry_run,
-        developer_mode,
         extra_cmake_args):
     """Script for configuring libdispatch's build."""
     command_line = []
@@ -55,11 +58,12 @@ def configure(
                          '-G{0}'.format(cmake_generator)])
 
     command_line.append('-DCMAKE_INSTALL_PREFIX={0}'.format(prefix))
+    command_line.append('-DCMAKE_C_COMPILER={0}'.format(c_compiler))
+    command_line.append('-DCMAKE_CXX_COMPILER={0}'.format(cxx_compiler))
 
-    if developer_mode:
-        command_line.extend(['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
-                             '--warn-uninitialized',
-                             '-Wdev', ])
+    command_line.append('--no-warn-unused-cli')
+    command_line.append('--warn-uninitialized')
+    command_line.append('-DCMAKE_EXPORT_COMPILE_COMMANDS=ON')
 
     command_line.extend(extra_cmake_args)
 
@@ -71,9 +75,10 @@ def configure(
             ctx.exit(subprocess.call(command_line))
         except OSError as e:
             if e.errno == errno.ENOENT:
-                ctx.fail("No such executable '%s'" % cmake_executable)
+                ctx.fail("No such executable '{0}'".format(cmake_executable))
             else:
-                ctx.fail("Could no launch executable '%s'" % cmake_executable)
+                ctx.fail("Could not launch executable '{0}'".format(
+                    cmake_executable))
 
 
 if __name__ == '__main__':

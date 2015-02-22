@@ -29,6 +29,7 @@ TESTS = [
     Test('io',              'default'),
     Test('io_net',          'default'),
     Test('main_queue',      'default'),
+    Test('np',              'default'),
     Test('overcommit',      'default'),
     Test('pingpong',        'default'),
     Test('plusplus',        'default'),

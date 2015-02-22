@@ -62,8 +62,8 @@ set_property(TARGET libdispatch_static libdispatch_shared PROPERTY
     OUTPUT_NAME dispatch)
 
 set_target_properties(libdispatch_shared PROPERTIES 
-    SOVERSION 0
-    VERSION ${dispatch_VERSION}
+    SOVERSION ${DISPATCH_ABI_VERSION}
+    VERSION ${DISPATCH_VERSION}
 )
 
 install(

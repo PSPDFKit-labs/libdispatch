@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.8.7)
 
 project (dispatch)
-set (dispatch_VERSION "0.1dev")
+set (DISPATCH_VERSION 0.1dev)
+set (DISPATCH_ABI_VERSION 1)
 
 list (APPEND CMAKE_MODULE_PATH "${dispatch_SOURCE_DIR}/cmake")
 include (BuildUtil)

@@ -49,8 +49,7 @@ tested.)
 
 ## Known Issues
 - 2014-10-01 - Dispatch Sources of type `DISPATCH_SOURCE_TYPE_VNODE` are
-  misbehaving, and best avoided until I have time to investigate. It's likely
-  an issue with the underlying libkqueue.
+  unreliable, and should be avoided for now.
 
 ## Testing
 See the `run-tests.py` script in `testing/`.

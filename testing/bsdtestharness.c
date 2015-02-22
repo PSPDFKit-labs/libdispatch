@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 		gettimeofday(&tv_stop, NULL);
 		tv_wall.tv_sec = tv_stop.tv_sec - tv_start.tv_sec;
 		tv_wall.tv_sec -= (tv_stop.tv_usec < tv_start.tv_usec);
-		tv_wall.tv_usec = abs(tv_stop.tv_usec - tv_start.tv_usec);
+		tv_wall.tv_usec = labs(tv_stop.tv_usec - tv_start.tv_usec);
 
 		int res2 = wait4(pid, &status, WNOHANG, &usage);
 		assert(res2 != -1);

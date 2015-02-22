@@ -174,7 +174,7 @@ static void
 _dispatch_dealloc(dispatch_object_t dou)
 {
 	dispatch_queue_t tq = dou._do->do_targetq;
-	dispatch_function_t func = (dispatch_function_t)dou._do->do_finalizer;
+	dispatch_function_t func = dou._do->do_finalizer;
 	void *ctxt = dou._do->do_ctxt;
 
 	_os_object_dealloc(dou._os_obj);
@@ -227,7 +227,7 @@ dispatch_set_context(dispatch_object_t dou, void *context)
 void
 dispatch_set_finalizer_f(dispatch_object_t dou, dispatch_function_t finalizer)
 {
-	dou._do->do_finalizer = (void*)finalizer;
+	dou._do->do_finalizer = finalizer;
 }
 
 void

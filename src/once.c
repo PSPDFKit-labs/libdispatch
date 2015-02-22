@@ -35,9 +35,9 @@ struct _dispatch_once_waiter_s {
 void
 dispatch_once(dispatch_once_t *val, dispatch_block_t block)
 {
-	struct Block_basic *bb = (struct Block_basic *)block;
+	struct Block_basic *bb = (void *)block;
 
-	dispatch_once_f(val, block, (dispatch_function_t)bb->Block_invoke);
+	dispatch_once_f(val, block, (void *)bb->Block_invoke);
 }
 #endif
 

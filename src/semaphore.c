@@ -48,7 +48,7 @@ _dispatch_semaphore_init(long value, dispatch_object_t dou)
 {
 	dispatch_semaphore_t dsema = dou._dsema;
 
-	dsema->do_next = (dispatch_semaphore_t)DISPATCH_OBJECT_LISTLESS;
+	dsema->do_next = DISPATCH_OBJECT_LISTLESS;
 	dsema->do_targetq = dispatch_get_global_queue(
 			DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
 	dsema->dsema_value = value;
@@ -71,7 +71,7 @@ dispatch_semaphore_create(long value)
 		return NULL;
 	}
 
-	dsema = (dispatch_semaphore_t)_dispatch_alloc(DISPATCH_VTABLE(semaphore),
+	dsema = _dispatch_alloc(DISPATCH_VTABLE(semaphore),
 			sizeof(struct dispatch_semaphore_s));
 	_dispatch_semaphore_init(value, dsema);
 	return dsema;
@@ -310,8 +310,8 @@ dispatch_semaphore_wait(dispatch_semaphore_t dsema, dispatch_time_t timeout)
 dispatch_group_t
 dispatch_group_create(void)
 {
-	dispatch_group_t dg = (dispatch_group_t)_dispatch_alloc(
-			DISPATCH_VTABLE(group), sizeof(struct dispatch_semaphore_s));
+	dispatch_group_t dg = _dispatch_alloc(DISPATCH_VTABLE(group),
+			sizeof(struct dispatch_semaphore_s));
 	_dispatch_semaphore_init(LONG_MAX, dg);
 	return dg;
 }
@@ -518,7 +518,7 @@ dispatch_group_notify_f(dispatch_group_t dg, dispatch_queue_t dq, void *ctxt,
 	struct dispatch_sema_notify_s *dsn, *prev;
 
 	// FIXME -- this should be updated to use the continuation cache
-	while (!(dsn = (struct dispatch_sema_notify_s *)calloc(1, sizeof(*dsn)))) {
+	while (!(dsn = calloc(1, sizeof(*dsn)))) {
 		sleep(1);
 	}
 
@@ -567,7 +567,7 @@ _dispatch_thread_semaphore_create(void)
 	}
 	return s4;
 #elif USE_POSIX_SEM
-	sem_t *s4 = (sem_t *)malloc(sizeof(*s4));
+	sem_t *s4 = malloc(sizeof(*s4));
 	int ret = sem_init(s4, 0, 0);
 	DISPATCH_SEMAPHORE_VERIFY_RET(ret);
 	return (_dispatch_thread_semaphore_t) s4;

@@ -331,6 +331,15 @@ dispatch_io_create(dispatch_io_type_t type, dispatch_fd_t fd,
 }
 
 dispatch_io_t
+dispatch_io_create_f_np(dispatch_io_type_t type, dispatch_fd_t fd,
+		dispatch_queue_t queue, void *context,
+		void (*cleanup_handler)(void *context, int error))
+{
+	return dispatch_io_create(type, fd, queue, !cleanup_handler ? NULL :
+			^(int error){ cleanup_handler(context, error); });
+}
+
+dispatch_io_t
 dispatch_io_create_with_path(dispatch_io_type_t type, const char *path,
 		int oflag, mode_t mode, dispatch_queue_t queue,
 		void (^cleanup_handler)(int error))
@@ -413,6 +422,16 @@ dispatch_io_create_with_path(dispatch_io_type_t type, const char *path,
 		});
 	});
 	return channel;
+}
+
+dispatch_io_t
+dispatch_io_create_with_path_f_np(dispatch_io_type_t type, const char *path,
+		int oflag, mode_t mode, dispatch_queue_t queue, void *context,
+		void (*cleanup_handler)(void *context, int error))
+{
+	return dispatch_io_create_with_path(type, path, oflag, mode, queue,
+			!cleanup_handler ? NULL :
+			^(int error){ cleanup_handler(context, error); });
 }
 
 dispatch_io_t
@@ -509,6 +528,16 @@ dispatch_io_create_with_io(dispatch_io_type_t type, dispatch_io_t in_channel,
 		});
 	});
 	return channel;
+}
+
+dispatch_io_t
+dispatch_io_create_with_io_f_np(dispatch_io_type_t type,
+		dispatch_io_t in_channel, dispatch_queue_t queue, void *context,
+		void (*cleanup_handler)(void *context, int error))
+{
+	return dispatch_io_create_with_io(type, in_channel, queue,
+			!cleanup_handler ? NULL :
+			^(int error){ cleanup_handler(context, error); });
 }
 
 #pragma mark -
@@ -677,6 +706,13 @@ dispatch_io_barrier(dispatch_io_t channel, dispatch_block_t barrier)
 }
 
 void
+dispatch_io_barrier_f_np(dispatch_io_t channel, void *context,
+		dispatch_function_t barrier)
+{
+	return dispatch_io_barrier(channel, ^{ barrier(context); });
+}
+
+void
 dispatch_io_read(dispatch_io_t channel, off_t offset, size_t length,
 		dispatch_queue_t queue, dispatch_io_handler_t handler)
 {
@@ -695,6 +731,17 @@ dispatch_io_read(dispatch_io_t channel, off_t offset, size_t length,
 		}
 		_dispatch_release(channel);
 		_dispatch_release(queue);
+	});
+}
+
+void
+dispatch_io_read_f_np(dispatch_io_t channel, off_t offset, size_t length,
+		dispatch_queue_t queue, void *context,
+		dispatch_io_handler_function_t handler)
+{
+	return dispatch_io_read(channel, offset, length, queue,
+			^(bool done, dispatch_data_t d, int error){
+		handler(context, done, d, error);
 	});
 }
 
@@ -720,6 +767,17 @@ dispatch_io_write(dispatch_io_t channel, off_t offset, dispatch_data_t data,
 		}
 		_dispatch_release(channel);
 		_dispatch_release(queue);
+	});
+}
+
+void
+dispatch_io_write_f_np(dispatch_io_t channel, off_t offset,
+		dispatch_data_t data, dispatch_queue_t queue, void *context,
+		dispatch_io_handler_function_t handler)
+{
+	return dispatch_io_write(channel, offset, data, queue,
+			^(bool done, dispatch_data_t d, int error){
+		handler(context, done, d, error);
 	});
 }
 
@@ -783,6 +841,15 @@ dispatch_read(dispatch_fd_t fd, size_t length, dispatch_queue_t queue,
 }
 
 void
+dispatch_read_f_np(dispatch_fd_t fd, size_t length, dispatch_queue_t queue,
+		void *context, void (*handler)(void *, dispatch_data_t, int))
+{
+	return dispatch_read(fd, length, queue, ^(dispatch_data_t d, int error){
+		handler(context, d, error);
+	});
+}
+
+void
 dispatch_write(dispatch_fd_t fd, dispatch_data_t data, dispatch_queue_t queue,
 		void (^handler)(dispatch_data_t, int))
 {
@@ -841,6 +908,16 @@ dispatch_write(dispatch_fd_t fd, dispatch_data_t data, dispatch_queue_t queue,
 			_dispatch_operation_enqueue(op, DOP_DIR_WRITE, data);
 		}
 		_dispatch_io_data_release(data);
+	});
+}
+
+void
+dispatch_write_f_np(dispatch_fd_t fd, dispatch_data_t data,
+		dispatch_queue_t queue, void *context,
+		void (*handler)(void *, dispatch_data_t, int))
+{
+	return dispatch_write(fd, data, queue, ^(dispatch_data_t d, int error){
+		handler(context, d, error);
 	});
 }
 
@@ -1920,8 +1997,13 @@ _dispatch_operation_perform(dispatch_operation_t op)
 			} else {
 				op->buf_siz = max_buf_siz;
 			}
+			size_t buf_siz_floor =
+					op->buf_siz > PAGE_SIZE ? op->buf_siz : PAGE_SIZE;
 			while (!(op->buf = valloc(op->buf_siz))) {
-				op->buf_siz /= 2;
+				sleep(1);  // Temporary resource shortage
+				if (op->buf_siz >= buf_siz_floor / 2 * 3) {
+					op->buf_siz = buf_siz_floor / 3 * 2;
+				}
 			}
 			_dispatch_io_debug("buffer allocated", op->fd_entry->fd);
 		} else if (op->direction == DOP_DIR_WRITE) {

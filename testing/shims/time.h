@@ -41,15 +41,10 @@ _dispatch_monotonic_time()
 #if HAVE_MACH
 	return mach_absolute_time();
 #else
-	clockid_t clockID;
-	#ifdef CLOCK_MONOTONIC_RAW
-		clockID = CLOCK_MONOTONIC_RAW;
-	#else
-		clockID = CLOCK_MONOTONIC;
-	#endif
 	struct timespec ts;
-	int status = clock_gettime(clockID, &ts);
+	int status = clock_gettime(CLOCK_MONOTONIC, &ts);
 	assert(0 == status);
+	(void)status;
 	return (uint64_t)ts.tv_nsec + NSEC_PER_SEC * ts.tv_sec;
 #endif
 }

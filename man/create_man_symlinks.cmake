@@ -3,7 +3,7 @@ include (CMakeParseArguments)
 
 function (create_man_symlink symlink_target)
     cmake_parse_arguments(args "" "" "SYMLINKS" ${ARGV})
-    set (man_dir "$ENV{DESTDIR}/${CMAKE_INSTALL_PREFIX}/share/man/man3")
+    set (man_dir "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/share/man/man3")
 
     foreach (link IN LISTS args_SYMLINKS)
         execute_process(COMMAND ${CMAKE_COMMAND} -E
@@ -15,9 +15,9 @@ function (create_man_symlink symlink_target)
 endfunction ()
 
 create_man_symlink(dispatch_after.3 SYMLINKS dispatch_after_f.3)
-    
+
 create_man_symlink(dispatch_apply.3 SYMLINKS dispatch_apply_f.3)
-    
+
 create_man_symlink(dispatch_async.3 SYMLINKS
     dispatch_sync.3
     dispatch_async_f.3

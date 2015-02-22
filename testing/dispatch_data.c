@@ -39,22 +39,38 @@
 dispatch_group_t g;
 
 #if DISPATCHTEST_DATA
-static void
-test_concat(void)
+static bool* g_buffer2_destroyed;
+static void buffer2_mark_as_destroyed(void* ctx)
 {
+	*g_buffer2_destroyed = true;
+}
+
+static void
+test_concat(bool use_blocks)
+{
+	__block bool buffer2_destroyed = false;
+
 	dispatch_group_enter(g);
 	dispatch_async(dispatch_get_main_queue(), ^{
-		char* buffer1 = "This is buffer1 ";
+		const char* buffer1 = "This is buffer1 ";
 		size_t size1 = 17;
-		char* buffer2 = "This is buffer2 ";
+		const char* buffer2 = "This is buffer2 ";
 		size_t size2 = 17;
-		__block bool buffer2_destroyed = false;
 
-		dispatch_data_t data1 = dispatch_data_create(buffer1, size1, NULL, NULL);
-		dispatch_data_t data2 = dispatch_data_create(buffer2, size2,
-					dispatch_get_main_queue(), ^{
-			buffer2_destroyed = true;
-		});
+		dispatch_data_t data1, data2;
+
+		if (use_blocks) {
+			data1 = dispatch_data_create(buffer1, size1, NULL, NULL);
+			data2 = dispatch_data_create(buffer2, size2,
+										 dispatch_get_main_queue(),
+										 ^{ buffer2_destroyed = true; });
+		} else {
+			g_buffer2_destroyed = &buffer2_destroyed;
+			data1 = dispatch_data_create_f_np(buffer1, size1, NULL, NULL);
+			data2 = dispatch_data_create_f_np(buffer2, size2,
+											  dispatch_get_main_queue(),
+											  buffer2_mark_as_destroyed);
+		}
 		dispatch_data_t concat = dispatch_data_create_concat(data1, data2);
 
 		dispatch_release(data1);
@@ -108,7 +124,8 @@ main(void)
 	g = dispatch_group_create();
 
 #if DISPATCHTEST_DATA
-	test_concat();
+	test_concat(true);
+	test_concat(false);
 	test_cleanup();
 #endif
 

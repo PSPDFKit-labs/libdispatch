@@ -34,7 +34,7 @@ add_definitions(
     -Wall
     -Wextra
     -Wno-unused-parameter
-    -fvisibility=default
+    -fvisibility=hidden
 )
 
 if (CMAKE_C_COMPILER_ID MATCHES "GNU")

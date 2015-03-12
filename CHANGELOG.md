@@ -1,5 +1,8 @@
 # libdispatch for Linux - Changelog
 
+## 0.1.1 / 2015-03-12
+- [BUGFIX] Fix leaking of internal symbols from libdispatch.so
+
 ## 0.1.0 / 2015-02-22
 - Initial release.
 - [BUGFIX] dispatch io: improved handling of buffer allocation failures.

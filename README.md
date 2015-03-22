@@ -41,7 +41,7 @@ tested.)
 
     git clone git://github.com/nickhutchinson/libdispatch.git && cd libdispatch
     mkdir libdispatch-build && cd libdispatch-build
-    ./configure
+    ../configure
     make
     sudo make install
 

@@ -22,7 +22,7 @@ full use of libdispatch with compilers like GCC that don't support blocks, it
 is not advisable to build libdispatch itself with anything other than Clang, as
 the dispatch i/o portion cannot be built without compiler support for blocks.
 
-## Runtime Requirements
+## Build/Runtime Requirements
 - [libBlocksRuntime](https://github.com/mheily/blocks-runtime)
 - [libpthread_workqueue](https://github.com/mheily/libpwq)
 - [libkqueue](https://github.com/mheily/libkqueue)

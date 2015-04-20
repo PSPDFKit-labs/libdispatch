@@ -30,7 +30,9 @@
 #include <TargetConditionals.h>
 #endif
 #include <sys/types.h>
+#if HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
+#endif
 
 #include <bsdtests.h>
 #include "dispatch_test.h"

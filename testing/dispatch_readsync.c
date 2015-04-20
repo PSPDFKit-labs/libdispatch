@@ -26,12 +26,14 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <sys/param.h>	// for MIN()
+#if HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
+#endif
 #include <unistd.h>
 
 #include <bsdtests.h>
 #include "dispatch_test.h"
+#include "min.h"
 
 #define LAPS 10000
 #define INTERVAL 100

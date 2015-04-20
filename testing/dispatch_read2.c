@@ -19,10 +19,8 @@
  */
 
 #include <config/config.h>
-
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/param.h>
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -44,6 +42,7 @@
 
 #include <bsdtests.h>
 #include "dispatch_test.h"
+#include "min.h"
 
 #ifndef DISPATCHTEST_IO
 #if DISPATCH_API_VERSION >= 20100226 && DISPATCH_API_VERSION != 20101110

@@ -26,7 +26,11 @@
 #include "dispatch_test.h"
 
 uint32_t count = 0;
-const uint32_t final = 1000000; // 10M
+#if TARGET_OS_ANDROID
+const uint32_t final = 10000; 
+#else
+const uint32_t final = 1000000; // 10M 
+#endif
 
 void
 pingpongloop(dispatch_group_t group, dispatch_queue_t ping, dispatch_queue_t pong, size_t counter)

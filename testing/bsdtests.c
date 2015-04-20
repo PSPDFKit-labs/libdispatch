@@ -41,7 +41,7 @@ extern char **environ;
 #if HAVE_MACH
 #include <mach/mach_error.h>
 #endif
-#include <spawn.h>
+//#include <spawn.h>
 #include <inttypes.h>
 #include "bsdtests.h"
 
@@ -419,50 +419,52 @@ test_start(const char* desc)
 void
 test_leaks_pid(const char *name, pid_t pid)
 {
-	int res;
-	char pidstr[10];
+#if !TARGET_OS_ANDROID
+       int res;
+       char pidstr[10];
 
-	if (getenv("NOLEAKS")) {
-		return;
-	}
+       if (getenv("NOLEAKS")) {
+               return;
+       }
 
-	#if !HAVE_LEAKS
-		return;
-	#endif
+       #if !HAVE_LEAKS
+               return;
+       #endif
 
-	if (!name) {
-		name = "Leaks";
-	}
+       if (!name) {
+               name = "Leaks";
+       }
 
-	/* leaks doesn't work against debug variant malloc */
-	const char *dyld_image_suffix = getenv("DYLD_IMAGE_SUFFIX");
-	if (dyld_image_suffix && strstr(dyld_image_suffix, "_debug")) {
-		return;
-	}
+       /* leaks doesn't work against debug variant malloc */
+       const char *dyld_image_suffix = getenv("DYLD_IMAGE_SUFFIX");
+       if (dyld_image_suffix && strstr(dyld_image_suffix, "_debug")) {
+               return;
+       }
 
-	char *inserted_libs = getenv("DYLD_INSERT_LIBRARIES");
-	if (inserted_libs && strstr(inserted_libs, "/usr/lib/libgmalloc.dylib")) {
-		return;
-	}
+       char *inserted_libs = getenv("DYLD_INSERT_LIBRARIES");
+       if (inserted_libs && strstr(inserted_libs, "/usr/lib/libgmalloc.dylib")) {
+               return;
+       }
 
-	unsetenv("DYLD_IMAGE_SUFFIX");
-	unsetenv("DYLD_INSERT_LIBRARIES");
-	unsetenv("DYLD_LIBRARY_PATH");
+       unsetenv("DYLD_IMAGE_SUFFIX");
+       unsetenv("DYLD_INSERT_LIBRARIES");
+       unsetenv("DYLD_LIBRARY_PATH");
 
-	unsetenv("MallocStackLogging");
-	unsetenv("MallocStackLoggingNoCompact");
+       unsetenv("MallocStackLogging");
+       unsetenv("MallocStackLoggingNoCompact");
 
-	snprintf(pidstr, sizeof(pidstr), "%d", pid);
+       snprintf(pidstr, sizeof(pidstr), "%d", pid);
 
-	char* args[] = { "./leaks-wrapper", pidstr, NULL };
-	res = posix_spawnp(&pid, args[0], NULL, NULL, args, * _NSGetEnviron());
-	if (res == 0 && pid > 0) {
-		int status;
-		waitpid(pid, &status, 0);
-		test_long(name, status, 0);
-	} else {
-		perror(args[0]);
-	}
+       char* args[] = { "./leaks-wrapper", pidstr, NULL };
+       res = posix_spawnp(&pid, args[0], NULL, NULL, args, * _NSGetEnviron());
+       if (res == 0 && pid > 0) {
+               int status;
+               waitpid(pid, &status, 0);
+               test_long(name, status, 0);
+       } else {
+               perror(args[0]);
+       }
+#endif
 }
 
 void

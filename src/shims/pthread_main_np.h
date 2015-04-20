@@ -33,7 +33,9 @@
 static inline int
 pthread_main_np()
 {
-#if __linux__
+#if TARGET_OS_ANDROID
+    return gettid();
+#elif TARGET_OS_LINUX
 	return syscall(SYS_gettid) == getpid() ? 1 : 0;
 #else
 #error "No suported way to determine if the current thread is the main thread."

@@ -30,7 +30,10 @@
 #include <mach/port.h>
 #include <mach/message.h>
 #endif
+
+#if !TARGET_OS_WIN32 && !TARGET_OS_ANDROID
 #include <sys/signal.h>
+#endif
 
 /*!
  * @header

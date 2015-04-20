@@ -26,11 +26,15 @@
 static inline char *
 getprogname(void)
 {
-# if HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
-	return program_invocation_short_name;
+#if defined(__ANDROID_API__)
+    return "TODO: getprogname() not available on Android.";
+#else
+#if HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
+    return program_invocation_short_name;
 # else
 #   error getprogname(3) is not available on this platform
 # endif
+#endif
 }
 #endif /* HAVE_GETPROGNAME */
 

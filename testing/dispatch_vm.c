@@ -25,7 +25,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#if HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
+#endif
 #include <stdarg.h>
 #include <time.h>
 

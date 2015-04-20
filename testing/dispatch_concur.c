@@ -26,8 +26,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#if HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
-#include <sys/param.h>	// for MIN()
+#endif
+#include "min.h"
 
 #include <bsdtests.h>
 #include "dispatch_test.h"

@@ -156,7 +156,7 @@
 #include <sys/event.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
+//#include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
@@ -171,7 +171,7 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <search.h>
+//#include <search.h>
 #if USE_POSIX_SEM
 #include <semaphore.h>
 #endif

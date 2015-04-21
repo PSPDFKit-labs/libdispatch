@@ -32,8 +32,13 @@ enum {
 	OSBigEndian
 };
 
+#ifdef TARGET_OS_ANDROID
+#define OSSwapLittleToHostInt16(x)	letoh16(x)
+#define OSSwapBigToHostInt16(x)		betoh16(x)
+#else
 #define OSSwapLittleToHostInt16(x)	le16toh(x)
 #define OSSwapBigToHostInt16(x)		be16toh(x)
+#endif
 #define OSSwapHostToLittleInt16(x)	htole16(x)
 #define OSSwapHostToBigInt16(x)		htobe16(x)
 

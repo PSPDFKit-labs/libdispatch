@@ -17620,14 +17620,6 @@ rm -f core conftest.err conftest.$ac_objext \
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $dispatch_cv_ld_darwin" >&5
 $as_echo "$dispatch_cv_ld_darwin" >&6; }
-
-is_android=false
-case "$host_os" in
-    linux-android*)
-        is_android=true
-        ;;
-esac
-
  if test "x$dispatch_cv_ld_darwin" != "xno"; then
   HAVE_DARWIN_LD_TRUE=
   HAVE_DARWIN_LD_FALSE='#'
@@ -17637,6 +17629,13 @@ else
 fi
 
 
+
+is_android=false
+case "$host_os" in
+    linux-android*)
+        is_android=true
+        ;;
+esac
 if test "x$is_android" = "xtrue"; then :
 
 $as_echo "#define TARGET_OS_ANDROID 1" >>confdefs.h
@@ -17650,6 +17649,7 @@ else
   TARGET_OS_ANDROID_TRUE='#'
   TARGET_OS_ANDROID_FALSE=
 fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sin in -lm" >&5
 $as_echo_n "checking for sin in -lm... " >&6; }
@@ -17695,7 +17695,6 @@ _ACEOF
   LIBS="-lm $LIBS"
 
 fi
-
 
 
 #

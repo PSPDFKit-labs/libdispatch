@@ -299,6 +299,7 @@ case "$host_os" in
 esac
 AS_IF([test "x$is_android" = "xtrue"],
   [AC_DEFINE(TARGET_OS_ANDROID, 1, [Defined if target is Android])]
+  [AC_DEFINE(TARGET_OS_EMBEDDED, 1, [Defined if target is Android])]
 )
 AM_CONDITIONAL([TARGET_OS_ANDROID], [test "x$is_android" = "xtrue"])
 

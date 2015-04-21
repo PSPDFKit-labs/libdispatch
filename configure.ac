@@ -288,12 +288,20 @@ AC_CACHE_CHECK([for darwin linker], [dispatch_cv_ld_darwin], [
     [dispatch_cv_ld_darwin="yes"], [dispatch_cv_ld_darwin="no"])
   LDFLAGS="$saveLDFLAGS"
 ])
+
+is_android=false
+case "$host_os" in
+    linux-android*)
+        is_android=true
+        ;;
+esac
+
 AM_CONDITIONAL(HAVE_DARWIN_LD, [test "x$dispatch_cv_ld_darwin" != "xno"])
 AC_CANONICAL_HOST()
-AS_IF([test "x$host_os" = "xlinux-androideabi"],
+AS_IF([test "x$is_android" = "xtrue"],
   [AC_DEFINE(TARGET_OS_ANDROID, 1, [Defined if target is Android])]
 )
-AM_CONDITIONAL([TARGET_OS_ANDROID], [test "x$host_os" = "xlinux-androideabi"])
+AM_CONDITIONAL([TARGET_OS_ANDROID], [test "x$is_android" = "xtrue"])
 AC_CHECK_LIB([m],[sin])
 
 

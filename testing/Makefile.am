@@ -85,7 +85,7 @@ AM_CFLAGS=-Wall $(MARCH_FLAGS) $(CBLOCKS_FLAGS) $(KQUEUE_CFLAGS)
 AM_OBJCFLAGS=-Wall $(MARCH_FLAGS) $(CBLOCKS_FLAGS) -fobjc-gc
 AM_CXXFLAGS=-Wall $(MARCH_FLAGS) $(CXXBLOCKS_FLAGS)
 
-LDADD=libbsdtests.la ../src/libdispatch.la -L/opt/android/stc/lib $(KQUEUE_LIBS)
+LDADD=libbsdtests.la ../src/libdispatch.la $(KQUEUE_LIBS)
 libbsdtests_la_LDFLAGS=-avoid-version
 
 if ! TARGET_OS_ANDROID

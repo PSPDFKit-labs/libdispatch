@@ -31,6 +31,10 @@ ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 	LOCAL_CFLAGS += -DHAVE_GETPROGNAME
 endif
 
+ifeq ($(TARGET_PLATFORM),android-15)
+	LOCAL_CFLAGS += -DHAVE_VALLOC
+endif
+
 
 include $(BUILD_STATIC_LIBRARY)
 

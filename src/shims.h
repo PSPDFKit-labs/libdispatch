@@ -57,6 +57,7 @@ void __builtin_trap(void);
 #include "shims/pthread_main_np.h"
 #include "shims/time.h"
 #include "shims/tsd.h"
+#include "shims/valloc.h"
 
 #ifdef __APPLE__
 // Clear the stack before calling long-running thread-handler functions that

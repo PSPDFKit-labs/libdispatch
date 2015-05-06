@@ -218,7 +218,7 @@ AC_CHECK_DECLS([SIGEMT], [], [], [[#include <signal.h>]])
 AC_CHECK_DECLS([VQ_UPDATE, VQ_VERYLOWDISK], [], [], [[#include <sys/mount.h>]])
 AC_CHECK_DECLS([program_invocation_short_name], [], [], [[#include <errno.h>]])
 AC_CHECK_FUNCS([pthread_key_init_np pthread_main_np mach_absolute_time malloc_create_zone])
-AC_CHECK_FUNCS([sysctlbyname sysconf getprogname])
+AC_CHECK_FUNCS([sysctlbyname sysconf getprogname valloc])
 AC_CHECK_FUNCS([strlcpy asprintf])
 AC_CHECK_DECLS([POSIX_SPAWN_SETEXEC], [], [], [[#include <sys/spawn.h>]])
 AC_CHECK_DECLS([POSIX_SPAWN_START_SUSPENDED],
